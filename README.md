@@ -25,7 +25,3 @@
     - AWS for cloud hosting the pages and database
 
 - __Non-Functional Requirements__: Use .NET features to make site secure and efficient on usage.
-
-- __Project__: 
-    - [The Watch Vault Repo](https://github.com/FGE-Organization/FGE-Untitled-project)
-    - [The Watch Vault Project Board](https://github.com/orgs/FGE-Organization/projects/1)
