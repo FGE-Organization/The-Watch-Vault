@@ -1,4 +1,4 @@
-# FGE-The-Watch-Vault
+# The Watch Vault
 
 - Enmanuel De los Santos
 - Braulio Garcia Gonzalez
