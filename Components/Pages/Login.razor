@@ -1,0 +1,117 @@
+@page "/login"
+
+<PageTitle>Login - The Watch Vault</PageTitle>
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <h2>The Watch Vault</h2>
+            <p>Sign in to your account</p>
+        </div>
+
+        <div class="login-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" class="form-control" placeholder="Enter your username" />
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" class="form-control" placeholder="Enter your password" />
+            </div>
+
+            <button type="button" class="btn btn-primary btn-login">Login</button>
+
+            <div class="login-footer">
+                <p>Don't have an account? <a href="#">Sign up</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 200px);
+        padding: 2rem;
+    }
+
+    .login-card {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .login-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .login-header h2 {
+        color: #1b6ec2;
+        margin-bottom: 0.5rem;
+        font-size: 1.75rem;
+    }
+
+    .login-header p {
+        color: #6c757d;
+        margin: 0;
+    }
+
+    .form-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #333;
+        font-weight: 500;
+    }
+
+    .form-group .form-control {
+        padding: 0.75rem 1rem;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+
+    .form-group .form-control:focus {
+        border-color: #1b6ec2;
+        box-shadow: 0 0 0 0.2rem rgba(27, 110, 194, 0.25);
+    }
+
+    .btn-login {
+        width: 100%;
+        padding: 0.75rem;
+        font-size: 1rem;
+        font-weight: 500;
+        margin-top: 0.5rem;
+    }
+
+    .login-footer {
+        text-align: center;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .login-footer p {
+        margin: 0;
+        color: #6c757d;
+    }
+
+    .login-footer a {
+        color: #1b6ec2;
+        text-decoration: none;
+    }
+
+    .login-footer a:hover {
+        text-decoration: underline;
+    }
+</style>
