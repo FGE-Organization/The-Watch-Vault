@@ -1,16 +1,26 @@
 ﻿@inherits LayoutComponentBase
 
 <div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+    <header class="top-navbar">
+        <div class="navbar-inner">
+            <a class="navbar-brand" href="">The Watch Vault</a>
+            <input type="checkbox" id="nav-toggle" class="nav-toggle" title="Toggle navigation" />
+            <label for="nav-toggle" class="nav-toggle-label">
+                <span></span>
+                <span></span>
+                <span></span>
+            </label>
+            <nav class="navbar-links">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">Home</NavLink>
+                <NavLink class="nav-link" href="shop">Shop</NavLink>
+                <NavLink class="nav-link" href="brands">Brands</NavLink>
+                <NavLink class="nav-link" href="login">Login</NavLink>
+            </nav>
+        </div>
+    </header>
 
     <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
-
-        <article class="content px-4">
+        <article class="content">
             @Body
         </article>
     </main>

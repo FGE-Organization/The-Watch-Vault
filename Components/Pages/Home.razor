@@ -1,7 +1,103 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>The Watch Vault — Luxury Timepieces</PageTitle>
 
-<h1>Hello, world!</h1>
+<!-- Hero Section -->
+<section class="hero" id="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <p class="hero-tagline">Est. 2026 · Curated Luxury</p>
+        <h1 class="hero-title">The Watch Vault</h1>
+        <p class="hero-subtitle">Discover an exquisite collection of the world's finest timepieces, handpicked for the discerning collector.</p>
+        <a href="/shop" class="hero-cta" id="shop-cta">Explore Collection</a>
+    </div>
+</section>
 
-Welcome to your new app.
+<!-- Featured Collections -->
+<section class="collections" id="collections">
+    <h2 class="section-heading">Featured Collections</h2>
+    <p class="section-subheading">Browse our curated categories of premium timepieces</p>
+    <div class="collections-grid">
+        <div class="collection-card" id="card-luxury">
+            <div class="card-image-wrapper">
+                <img src="images/luxury-watch.png" alt="Luxury Collection" loading="lazy" />
+            </div>
+            <div class="card-body">
+                <h3>Luxury</h3>
+                <p>Gold, diamonds &amp; prestige. Statement pieces for the bold.</p>
+                <a href="/shop" class="card-link">View Collection →</a>
+            </div>
+        </div>
+        <div class="collection-card" id="card-sport">
+            <div class="card-image-wrapper">
+                <img src="images/sport-watch.png" alt="Sport Collection" loading="lazy" />
+            </div>
+            <div class="card-body">
+                <h3>Sport</h3>
+                <p>Built for performance. Diving, racing &amp; adventure watches.</p>
+                <a href="/shop" class="card-link">View Collection →</a>
+            </div>
+        </div>
+        <div class="collection-card" id="card-classic">
+            <div class="card-image-wrapper">
+                <img src="images/classic-watch.png" alt="Classic Collection" loading="lazy" />
+            </div>
+            <div class="card-body">
+                <h3>Classic</h3>
+                <p>Timeless elegance. Dress watches that never go out of style.</p>
+                <a href="/shop" class="card-link">View Collection →</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Value Proposition -->
+<section class="value-props" id="value-props">
+    <div class="value-card" id="vp-authentic">
+        <div class="value-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M3.612 15.443c-.396.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.35.79-.746.592L8 13.187l-4.389 2.256z"/>
+            </svg>
+        </div>
+        <h3>Authenticity Guaranteed</h3>
+        <p>Every timepiece is verified for authenticity with full documentation and provenance.</p>
+    </div>
+    <div class="value-card" id="vp-curated">
+        <div class="value-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zM4.5 7.5a.5.5 0 0 1 0-1 .5.5 0 0 1 0 1zm3 4.5a.5.5 0 0 1-.5-.5V9a.5.5 0 0 1 1 0v2.5a.5.5 0 0 1-.5.5zm1-4.5A1.5 1.5 0 1 1 8 4a1.5 1.5 0 0 1 .5 3zm3.5 0a.5.5 0 0 1 0-1 .5.5 0 0 1 0 1z"/>
+            </svg>
+        </div>
+        <h3>Curated Collection</h3>
+        <p>Handpicked by experts who understand the art of fine watchmaking.</p>
+    </div>
+    <div class="value-card" id="vp-secure">
+        <div class="value-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M5.338 1.59a61 61 0 0 0-2.837.856.48.48 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.7 10.7 0 0 0 2.287 2.233c.346.244.652.42.893.533q.18.085.293.118a1 1 0 0 0 .101.025 1 1 0 0 0 .1-.025q.114-.034.294-.118c.24-.113.547-.29.893-.533a10.7 10.7 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.8 11.8 0 0 1-2.517 2.453 7 7 0 0 1-1.048.625 2.5 2.5 0 0 1-.444.2 1 1 0 0 1-.226.055h-.02a1 1 0 0 1-.227-.055 2.5 2.5 0 0 1-.443-.2 7 7 0 0 1-1.048-.625 11.8 11.8 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 63 63 0 0 1 5.072.56z"/>
+                <path d="M10.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>
+            </svg>
+        </div>
+        <h3>Secure Shopping</h3>
+        <p>Enterprise-grade security protects every transaction and your personal data.</p>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="site-footer" id="site-footer">
+    <div class="footer-content">
+        <div class="footer-brand">
+            <h4>The Watch Vault</h4>
+            <p>Your destination for luxury timepieces.</p>
+        </div>
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/shop">Shop</a>
+            <a href="/brands">Brands</a>
+            <a href="/login">Login</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2026 The Watch Vault. All rights reserved.</p>
+    </div>
+</footer>
