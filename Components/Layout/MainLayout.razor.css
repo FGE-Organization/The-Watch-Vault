@@ -1,81 +1,160 @@
+/* ============ Layout ============ */
 .page {
-    position: relative;
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
 }
 
 main {
     flex: 1;
 }
 
-.sidebar {
-    background-image: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 70%);
+.content {
+    padding: 0;
 }
 
-.top-row {
-    background-color: #f7f7f7;
-    border-bottom: 1px solid #d6d5d5;
-    justify-content: flex-end;
-    height: 3.5rem;
+/* ============ Top Navbar ============ */
+.top-navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: rgba(10, 10, 15, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    transition: background 0.35s ease;
+}
+
+.navbar-inner {
+    max-width: 1200px;
+    margin: 0 auto;
     display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.9rem 2rem;
+}
+
+.navbar-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #fff !important;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+}
+
+.navbar-brand:hover {
+    color: var(--wv-gold) !important;
+    text-decoration: none;
+}
+
+.navbar-links {
+    display: flex;
+    gap: 2rem;
     align-items: center;
 }
 
-    .top-row ::deep a, .top-row ::deep .btn-link {
-        white-space: nowrap;
-        margin-left: 1.5rem;
-        text-decoration: none;
-    }
-
-    .top-row ::deep a:hover, .top-row ::deep .btn-link:hover {
-        text-decoration: underline;
-    }
-
-    .top-row ::deep a:first-child {
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-@media (max-width: 640.98px) {
-    .top-row {
-        justify-content: space-between;
-    }
-
-    .top-row ::deep a, .top-row ::deep .btn-link {
-        margin-left: 0;
-    }
+.navbar-links ::deep .nav-link {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--wv-text-muted) !important;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 0.4rem 0;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
 }
 
-@media (min-width: 641px) {
-    .page {
-        flex-direction: row;
+.navbar-links ::deep .nav-link:hover {
+    color: #fff !important;
+    border-bottom-color: var(--wv-gold);
+}
+
+.navbar-links ::deep .nav-link.active {
+    color: var(--wv-gold) !important;
+    border-bottom-color: var(--wv-gold);
+}
+
+/* Hamburger toggle — hidden on desktop */
+.nav-toggle {
+    display: none;
+}
+
+.nav-toggle-label {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    cursor: pointer;
+    z-index: 101;
+}
+
+.nav-toggle-label span {
+    display: block;
+    width: 24px;
+    height: 2px;
+    background: #fff;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+}
+
+/* ============ Mobile ============ */
+@media (max-width: 768px) {
+    .nav-toggle-label {
+        display: flex;
     }
 
-    .sidebar {
-        width: 250px;
+    .navbar-links {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 260px;
         height: 100vh;
-        position: sticky;
-        top: 0;
+        flex-direction: column;
+        background: linear-gradient(180deg, rgb(5, 39, 103) 0%, #3a0647 100%);
+        padding: 5rem 2rem 2rem;
+        gap: 0;
+        transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: -8px 0 30px rgba(0, 0, 0, 0.5);
     }
 
-    .top-row {
-        position: sticky;
-        top: 0;
-        z-index: 1;
+    .nav-toggle:checked~.navbar-links {
+        right: 0;
     }
 
-    .top-row.auth ::deep a:first-child {
-        flex: 1;
-        text-align: right;
-        width: 0;
+    .navbar-links ::deep .nav-link {
+        font-size: 1rem;
+        padding: 1rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        width: 100%;
     }
 
-    .top-row, article {
-        padding-left: 2rem !important;
-        padding-right: 1.5rem !important;
+    .navbar-links ::deep .nav-link:hover {
+        border-bottom-color: rgba(255, 255, 255, 0.08);
+        padding-left: 0.5rem;
+    }
+
+    .nav-toggle:checked~.nav-toggle-label span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+    }
+
+    .nav-toggle:checked~.nav-toggle-label span:nth-child(2) {
+        opacity: 0;
+    }
+
+    .nav-toggle:checked~.nav-toggle-label span:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -5px);
+    }
+
+    .navbar-inner {
+        padding: 0.75rem 1.2rem;
     }
 }
 
+/* ============ Error UI ============ */
 #blazor-error-ui {
     color-scheme: light only;
     background: lightyellow;
@@ -90,9 +169,9 @@ main {
     z-index: 1000;
 }
 
-    #blazor-error-ui .dismiss {
-        cursor: pointer;
-        position: absolute;
-        right: 0.75rem;
-        top: 0.5rem;
-    }
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
