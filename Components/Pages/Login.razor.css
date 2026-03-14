@@ -1,0 +1,261 @@
+/* ============ Login Section ============ */
+.login-section {
+    position: relative;
+    min-height: calc(100vh - 80px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6rem 1.5rem 4rem;
+    background: var(--wv-dark);
+}
+
+.login-backdrop {
+    position: absolute;
+    inset: 0;
+    background: 
+        radial-gradient(ellipse 80% 50% at 70% 20%, rgba(201, 168, 76, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 30% 80%, rgba(201, 168, 76, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.login-container {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 440px;
+}
+
+/* ============ Login Card ============ */
+.login-card {
+    background: var(--wv-card-bg);
+    border: 1px solid var(--wv-card-border);
+    border-radius: var(--wv-radius);
+    padding: 2.5rem 2.25rem; /* 40px vertical, 36px horizontal */
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.35);
+}
+
+.login-tagline {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--wv-gold);
+    margin: 0 0 0.75rem; /* 12px */
+}
+
+.login-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 0.5rem; /* 8px */
+    letter-spacing: 0.5px;
+}
+
+.login-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    color: var(--wv-text-muted);
+    margin-bottom: 2rem; /* 32px - space before form */
+    line-height: 1.5;
+}
+
+/* ============ Form (8px spacing scale: 16, 24, 32) ============ */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; /* 24px between form groups */
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem; /* 8px between label and input */
+}
+
+.form-group label {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--wv-text);
+    letter-spacing: 0.3px;
+}
+
+/* Modern input fields: dark theme, consistent styling */
+.form-input {
+    width: 100%;
+    padding: 1rem 1.25rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    color: var(--wv-text);
+    background: var(--wv-dark-2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    transition: all var(--wv-transition);
+    box-sizing: border-box;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.form-input::placeholder {
+    color: var(--wv-text-muted);
+    opacity: 0.8;
+}
+
+.form-input:hover {
+    border-color: rgba(255, 255, 255, 0.18);
+    background: rgba(26, 26, 46, 0.9);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--wv-gold);
+    box-shadow: 0 0 0 3px var(--wv-gold-dim);
+    background: var(--wv-dark-2);
+}
+
+/* Override browser autofill to match dark theme */
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover,
+.form-input:-webkit-autofill:focus,
+.form-input:-webkit-autofill:active {
+    -webkit-text-fill-color: var(--wv-text);
+    -webkit-box-shadow: 0 0 0 30px var(--wv-dark-2) inset;
+    caret-color: var(--wv-text);
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* ============ Form Row (Remember me + Forgot) ============ */
+.form-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem; /* 16px */
+    margin-top: 0.25rem; /* 4px - subtle separation from inputs */
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem; /* 12px between checkbox and label */
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--wv-text-muted);
+    cursor: pointer;
+    user-select: none;
+}
+
+.form-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--wv-gold);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.forgot-link {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--wv-gold);
+    text-decoration: none;
+    transition: color var(--wv-transition);
+}
+
+.forgot-link:hover {
+    color: var(--wv-gold-light);
+}
+
+/* ============ Submit Button (professional spacing) ============ */
+.login-btn {
+    align-self: center;
+    margin-top: 1.5rem; /* 24px - clear separation from form row */
+    padding: 1rem 2.5rem; /* 16px vertical, 40px horizontal */
+    min-height: 48px; /* Touch-friendly, WCAG compliant */
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--wv-dark);
+    background: var(--wv-gold);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all var(--wv-transition);
+    box-shadow: 0 4px 25px rgba(201, 168, 76, 0.35);
+}
+
+.login-btn:hover {
+    background: var(--wv-gold-light);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 35px rgba(201, 168, 76, 0.5);
+}
+
+.login-btn:active {
+    transform: translateY(0);
+}
+
+/* ============ Sign Up Prompt (standard spacing) ============ */
+.signup-prompt {
+    margin-top: 2rem; /* 32px from button */
+    padding-top: 1.5rem; /* 24px above text */
+    border-top: 1px solid var(--wv-card-border);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--wv-text-muted);
+    text-align: center;
+    line-height: 1.6;
+}
+
+.signup-link {
+    color: var(--wv-gold);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color var(--wv-transition);
+}
+
+.signup-link:hover {
+    color: var(--wv-gold-light);
+}
+
+.signup-prompt .signup-link {
+    margin-left: 0.25rem; /* 4px - breathing room from "Don't have" */
+}
+
+/* ============ Validation ============ */
+.validation-summary {
+    padding: 1rem;
+    background: rgba(229, 0, 0, 0.1);
+    border: 1px solid rgba(229, 0, 0, 0.3);
+    border-radius: 10px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: #ff6b6b;
+    list-style: none;
+    margin: 0 0 1rem;
+}
+
+::deep .validation-message {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    color: #ff6b6b;
+}
+
+/* ============ Responsive ============ */
+@media (max-width: 480px) {
+    .login-section {
+        padding: 5rem 1rem 3rem;
+    }
+
+    .login-card {
+        padding: 2rem 1.5rem;
+    }
+
+    .login-title {
+        font-size: 1.6rem;
+    }
+}
