@@ -245,6 +245,74 @@
     color: #ff6b6b;
 }
 
+/* ============ OAuth Section ============ */
+.oauth-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.oauth-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.875rem 1.5rem;
+    min-height: 48px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #333;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+.oauth-btn:hover {
+    background: #f5f5f5;
+    border-color: #ccc;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.oauth-btn:active {
+    background: #eee;
+    transform: translateY(1px);
+}
+
+.oauth-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* ============ Divider ============ */
+.divider {
+    display: flex;
+    align-items: center;
+    margin: 1.5rem 0;
+    color: var(--wv-text-muted);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--wv-card-border);
+}
+
+.divider span {
+    padding: 0 1rem;
+}
+
 /* ============ Responsive ============ */
 @media (max-width: 480px) {
     .login-section {
