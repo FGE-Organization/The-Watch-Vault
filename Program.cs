@@ -20,7 +20,7 @@ builder.Services.AddAuthentication(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 
-    // 🔥 REQUIRED FOR OAUTH
+    // REQUIRED FOR OAUTH
     options.Cookie.SameSite = SameSiteMode.None;
 
     options.LoginPath = "/login";
@@ -35,7 +35,7 @@ builder.Services.AddAuthentication(options =>
 
     options.CallbackPath = "/signin-google";
 
-    // 🔥 CRITICAL FIX FOR "oauth state missing"
+    //FIX FOR "oauth state missing"
     options.CorrelationCookie.SameSite = SameSiteMode.None;
     options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
 
