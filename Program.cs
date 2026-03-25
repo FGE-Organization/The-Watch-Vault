@@ -35,7 +35,7 @@ builder.Services.AddAuthentication(options =>
 
     options.CallbackPath = "/signin-google";
 
-    // 🔥 CRITICAL FIX FOR "oauth state missing"
+    //CRITICAL FIX FOR "oauth state missing"
     options.CorrelationCookie.SameSite = SameSiteMode.None;
     options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
 
