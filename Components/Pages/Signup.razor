@@ -1,0 +1,137 @@
+@page "/signup"
+@inject NavigationManager Navigation
+@inject The_Watch_Vault.Data.IUserRepository UserRepository
+
+<PageTitle>Sign Up — The Watch Vault</PageTitle>
+
+<section class="signup-section">
+    <div class="signup-backdrop"></div>
+    <div class="signup-container">
+        <div class="signup-card">
+            <p class="signup-tagline">Est. 2026 · Curated Luxury</p>
+            <h1 class="signup-title">Create Account</h1>
+            <p class="signup-subtitle">Join The Watch Vault to explore our exclusive collection</p>
+
+            @if (!string.IsNullOrEmpty(SuccessMessage))
+            {
+                <div class="alert alert-success">
+                    @SuccessMessage
+                    <a href="/login" class="alert-link">Click here to sign in</a>
+                </div>
+            }
+
+            <EditForm Model="model" OnValidSubmit="HandleSignup" class="signup-form">
+                <DataAnnotationsValidator />
+                <ValidationSummary class="validation-summary" />
+
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <InputText id="name"
+                               @bind-Value="model.Name"
+                               class="form-input"
+                               placeholder="John Doe"
+                               autocomplete="name" />
+                    <ValidationMessage For="@(() => model.Name)" />
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <InputText id="email"
+                               @bind-Value="model.Email"
+                               class="form-input"
+                               placeholder="you@example.com"
+                               autocomplete="email" />
+                    <ValidationMessage For="@(() => model.Email)" />
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <InputText id="password"
+                               type="password"
+                               @bind-Value="model.Password"
+                               class="form-input"
+                               placeholder="••••••••"
+                               autocomplete="new-password" />
+                    <ValidationMessage For="@(() => model.Password)" />
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <InputText id="confirmPassword"
+                               type="password"
+                               @bind-Value="model.ConfirmPassword"
+                               class="form-input"
+                               placeholder="••••••••"
+                               autocomplete="new-password" />
+                    <ValidationMessage For="@(() => model.ConfirmPassword)" />
+                </div>
+
+                <button type="submit" class="signup-btn">Create Account</button>
+            </EditForm>
+
+            <p class="login-prompt">
+                Already have an account? <a href="/login" class="login-link">Sign in</a>
+            </p>
+        </div>
+    </div>
+</section>
+
+@code {
+    private SignupModel model = new();
+    private string? SuccessMessage { get; set; }
+    private string? ErrorMessage { get; set; }
+
+    private async Task HandleSignup()
+    {
+        try
+        {
+            ErrorMessage = null;
+            SuccessMessage = null;
+
+            // Check if email already exists
+            if (await UserRepository.ExistsByEmailAsync(model.Email))
+            {
+                ErrorMessage = "An account with this email already exists.";
+                return;
+            }
+
+            // Hash the password using BCrypt
+            var passwordHash = BCrypt.Net.BCrypt.HashPassword(model.Password);
+
+            // Create and save the user
+            var user = new The_Watch_Vault.Models.User
+            {
+                Name = model.Name,
+                Email = model.Email,
+                PasswordHash = passwordHash
+            };
+
+            await UserRepository.CreateAsync(user);
+
+            SuccessMessage = "Account created successfully! ";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"An error occurred: {ex.Message}";
+        }
+    }
+
+    private class SignupModel
+    {
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Name is required")]
+        [System.ComponentModel.DataAnnotations.StringLength(100, ErrorMessage = "Name cannot exceed 100 characters")]
+        public string Name { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Email is required")]
+        [System.ComponentModel.DataAnnotations.EmailAddress(ErrorMessage = "Invalid email address")]
+        public string Email { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Password is required")]
+        [System.ComponentModel.DataAnnotations.StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters")]
+        public string Password { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "Please confirm your password")]
+        [System.ComponentModel.DataAnnotations.Compare("Password", ErrorMessage = "Passwords do not match")]
+        public string ConfirmPassword { get; set; } = "";
+    }
+}
