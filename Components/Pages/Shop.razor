@@ -1,0 +1,118 @@
+@page "/shop"
+
+<PageTitle>Shop — The Watch Vault</PageTitle>
+
+<section class="shop-hero">
+    <div class="shop-hero-backdrop"></div>
+    <div class="shop-hero-content">
+        <p class="shop-tagline">Curated Selection</p>
+        <h1 class="shop-title">The Collection</h1>
+        <p class="shop-subtitle">Discover our exclusive range of luxury timepieces gracefully mapped from the Vault.</p>
+    </div>
+</section>
+
+<section class="shop-main">
+    <div class="shop-container">
+        
+        <!-- Sidebar Filters -->
+        <aside class="shop-filters">
+            <div class="filter-box">
+                <div class="filter-group">
+                    <h3>Brands</h3>
+                    <ul>
+                        @foreach(var b in Brands) {
+                            <li>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" class="form-checkbox" />
+                                    <span>@b.Name</span>
+                                </label>
+                            </li>
+                        }
+                    </ul>
+                </div>
+                
+                <div class="filter-group">
+                    <h3>Categories</h3>
+                    <ul>
+                        @foreach(var c in Categories) {
+                            <li>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" class="form-checkbox" />
+                                    <span>@c.Name</span>
+                                </label>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Grid -->
+        <div class="shop-grid-area">
+            <div class="shop-toolbar">
+                <span>Showing @Watches.Count watches</span>
+                <select class="form-input sort-select">
+                    <option>Sort by: Featured</option>
+                    <option>Price: Low to High</option>
+                    <option>Price: High to Low</option>
+                </select>
+            </div>
+            
+            <div class="collections-grid">
+                @foreach(var w in Watches) {
+                    <div class="collection-card">
+                        <div class="card-image-wrapper">
+                            <img src="@w.ImageUrl" alt="@w.Name" loading="lazy" />
+                        </div>
+                        <div class="card-body">
+                            <p class="watch-brand">@w.Brand</p>
+                            <h3 class="watch-name">@w.Name</h3>
+                            <p class="watch-price">$@w.Price.ToString("N0")</p>
+                            <button class="add-to-cart-btn login-btn">Add to Cart</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+        
+    </div>
+</section>
+
+@code {
+    // ----------------------------------------------------
+    // Single-Table DynamoDB Mappings (Mocked Models)
+    // ----------------------------------------------------
+    
+    public record WatchItem(string PK, string Brand, string Category, decimal Price, string Name, string ImageUrl);
+    public record BrandItem(string PK, string Name);
+    public record CategoryItem(string PK, string Name);
+    
+    // Derived from DB index GSI2 / GSI3 logic
+    public List<BrandItem> Brands = new()
+    {
+        new BrandItem("BRAND#Rolex", "Rolex"),
+        new BrandItem("BRAND#Omega", "Omega"),
+        new BrandItem("BRAND#Patek", "Patek Philippe"),
+        new BrandItem("BRAND#Audemars", "Audemars Piguet"),
+        new BrandItem("BRAND#Cartier", "Cartier")
+    };
+    
+    public List<CategoryItem> Categories = new()
+    {
+        new CategoryItem("CATEGORY#LuxurySports", "Luxury Sports"),
+        new CategoryItem("CATEGORY#Dress", "Dress Watches"),
+        new CategoryItem("CATEGORY#Dive", "Dive Watches"),
+        new CategoryItem("CATEGORY#Chronograph", "Chronographs")
+    };
+    
+    // Primary items queried from the base table or GSIs
+    public List<WatchItem> Watches = new()
+    {
+        new WatchItem("WATCH#O12345", "Rolex", "Dive Watches", 14500m, "Submariner Date", "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&q=80&w=800"),
+        new WatchItem("WATCH#O12346", "Omega", "Luxury Sports", 8200m, "Seamaster Aqua Terra", "https://images.unsplash.com/photo-1547996160-81dfa63595aa?auto=format&fit=crop&q=80&w=800"),
+        new WatchItem("WATCH#O12347", "Patek Philippe", "Dress Watches", 35000m, "Calatrava", "https://images.unsplash.com/photo-1622434641406-a158123450f9?auto=format&fit=crop&q=80&w=800"),
+        new WatchItem("WATCH#O12348", "Audemars Piguet", "Luxury Sports", 42000m, "Royal Oak", "https://images.unsplash.com/photo-1548171915-e7af554471f4?auto=format&fit=crop&q=80&w=800"),
+        new WatchItem("WATCH#O12349", "Cartier", "Dress Watches", 6800m, "Tank Must", "https://images.unsplash.com/photo-1509048191080-d2984bad6ae5?auto=format&fit=crop&q=80&w=800"),
+        new WatchItem("WATCH#O12350", "Rolex", "Chronographs", 22500m, "Daytona Cosmograph", "https://images.unsplash.com/photo-1587836374828-cb4387df3eb7?auto=format&fit=crop&q=80&w=800")
+    };
+}

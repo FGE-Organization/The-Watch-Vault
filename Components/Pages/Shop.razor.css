@@ -1,0 +1,230 @@
+/* ============ Shop Hero ============ */
+.shop-hero {
+    position: relative;
+    padding: 8rem 2rem 4rem;
+    text-align: center;
+    background: var(--wv-dark);
+    border-bottom: 1px solid var(--wv-card-border);
+    transition: background-color var(--wv-transition);
+}
+
+.shop-hero-backdrop {
+    position: absolute;
+    inset: 0;
+    background: 
+        radial-gradient(ellipse 70% 50% at 50% -20%, var(--wv-gold-dim) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.shop-hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.shop-tagline {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--wv-gold);
+    margin-bottom: 1rem;
+}
+
+.shop-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--wv-text);
+    margin-bottom: 1rem;
+    transition: color var(--wv-transition);
+}
+
+.shop-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.1rem;
+    color: var(--wv-text-muted);
+    line-height: 1.6;
+    transition: color var(--wv-transition);
+}
+
+
+/* ============ Shop Main ============ */
+.shop-main {
+    padding: 4rem 2rem;
+    background: var(--wv-dark);
+    transition: background-color var(--wv-transition);
+}
+
+.shop-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    gap: 3rem;
+    align-items: flex-start;
+}
+
+/* ============ Sidebar Filters ============ */
+.shop-filters {
+    flex: 0 0 260px;
+    position: sticky;
+    top: 100px;
+}
+
+.filter-box {
+    background: var(--wv-card-bg);
+    border: 1px solid var(--wv-card-border);
+    border-radius: var(--wv-radius);
+    padding: 2rem 1.5rem;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: all var(--wv-transition);
+}
+
+.filter-group {
+    margin-bottom: 2rem;
+}
+
+.filter-group:last-child {
+    margin-bottom: 0;
+}
+
+.filter-group h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--wv-text);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--wv-card-border);
+    transition: color var(--wv-transition);
+}
+
+.filter-group ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.filter-group li {
+    font-family: 'Inter', sans-serif;
+    color: var(--wv-text-muted);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+    transition: color var(--wv-transition);
+}
+
+.checkbox-label:hover {
+    color: var(--wv-gold);
+}
+
+/* Re-using .form-checkbox from Login if possible, else custom here */
+.form-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--wv-gold);
+    cursor: pointer;
+}
+
+/* ============ Grid Area & Toolbar ============ */
+.shop-grid-area {
+    flex: 1;
+    min-width: 0;
+}
+
+.shop-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--wv-card-border);
+    font-family: 'Inter', sans-serif;
+    color: var(--wv-text-muted);
+}
+
+.sort-select {
+    width: auto;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    background: var(--wv-dark-2);
+    color: var(--wv-text);
+    border: 1px solid var(--wv-card-border);
+    outline: none;
+    cursor: pointer;
+    transition: all var(--wv-transition);
+}
+
+.sort-select:hover, .sort-select:focus {
+    border-color: var(--wv-gold);
+}
+
+/* ============ Grid Specifics ============ */
+/* Reuse .collections-grid from app.css */
+.collections-grid {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Grid Card Adjustments */
+.watch-brand {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--wv-gold);
+    margin-bottom: 0.25rem;
+}
+
+.watch-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--wv-text);
+    margin-bottom: 0.5rem;
+    transition: color var(--wv-transition);
+}
+
+.watch-price {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.1rem;
+    color: var(--wv-text-muted);
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+}
+
+.add-to-cart-btn {
+    width: 100%;
+    margin-top: 0;
+    padding: 0.8rem 1rem;
+    font-size: 0.85rem;
+    border-radius: 8px;
+}
+
+/* ============ Responsive ============ */
+@media (max-width: 900px) {
+    .shop-container {
+        flex-direction: column;
+    }
+
+    .shop-filters {
+        position: relative;
+        top: 0;
+        width: 100%;
+        flex: none;
+    }
+}
