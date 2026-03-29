@@ -31,6 +31,16 @@
     --wv-card-border: rgba(0, 0, 0, 0.08);
 }
 
+/* Ensure Login page stays completely dark to protect teammate's design */
+[data-theme="light"] .login-section {
+    --wv-dark: #0a0a0f;
+    --wv-dark-2: #12121c;
+    --wv-dark-3: #1a1a2e;
+    --wv-text: #e8e6e3;
+    --wv-text-muted: #9a9a9a;
+    --wv-card-bg: rgba(255, 255, 255, 0.04);
+}
+
 html {
     scroll-behavior: smooth;
 }
