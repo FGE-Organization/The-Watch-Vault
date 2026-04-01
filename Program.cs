@@ -54,6 +54,12 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
     options.MinimumSameSitePolicy = SameSiteMode.None;
 });
 
+builder.Services.AddScoped(sp =>
+{
+    var navMan = sp.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
+    return new HttpClient { BaseAddress = new Uri(navMan.BaseUri) };
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -65,6 +71,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+// Note: MapStaticAssets() below handles the remaining static assets in .NET 9.
 
 app.UseRouting();
 
@@ -73,9 +80,9 @@ app.UseCookiePolicy();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
-app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+app.MapStaticAssets();
 
 // OAuth endpoints - these bypass the normal flow and work with anti-forgery
 app.MapGet("/login-google", async (HttpContext context) =>

@@ -1,4 +1,9 @@
 @page "/shop"
+@attribute [Microsoft.AspNetCore.Components.ExcludeFromInteractiveRouting]
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+@using System.Linq
+@using System.Text.Json
+@using System.Text.Json.Serialization
 
 <PageTitle>Shop — The Watch Vault</PageTitle>
 
@@ -13,89 +18,312 @@
 
 <section class="shop-main">
     <div class="shop-container">
-        
-        <!-- Sidebar Filters -->
-        <aside class="shop-filters">
+        <div class="shop-filters">
             <div class="filter-box">
+                <div class="filter-group">
+                    <h3>Search</h3>
+                    <input id="shop-search" type="search" class="form-input search-input" value="@SearchQuery" placeholder="Search by name or brand..." autocomplete="off" />
+                </div>
                 <div class="filter-group">
                     <h3>Brands</h3>
                     <ul>
-                        @foreach(var b in Brands) {
+                        @foreach (var b in Brands)
+                        {
                             <li>
                                 <label class="checkbox-label">
-                                    <input type="checkbox" class="form-checkbox" />
+                                    <input type="checkbox"
+                                           class="form-checkbox"
+                                           data-brand-filter="true"
+                                           value="@b.Name"
+                                           checked="@SelectedBrands.Contains(b.Name)" />
                                     <span>@b.Name</span>
                                 </label>
                             </li>
                         }
                     </ul>
                 </div>
-                
+                <div class="filter-group">
+                    <h3>Sort</h3>
+                    <select id="shop-sort" class="form-input sort-select">
+                        <option value="Featured" selected="@(CurrentSort == "Featured")">Sort by: Featured</option>
+                        <option value="PriceAsc" selected="@(CurrentSort == "PriceAsc")">Price: Low to High</option>
+                        <option value="PriceDesc" selected="@(CurrentSort == "PriceDesc")">Price: High to Low</option>
+                    </select>
+                </div>
+                <button id="shop-reset" type="button" class="hero-cta" style="width: 100%;">Reset Filters</button>
             </div>
-        </aside>
+        </div>
 
         <!-- Main Grid -->
         <div class="shop-grid-area">
             <div class="shop-toolbar">
-                <span>Showing @Watches.Count watches</span>
-                <select class="form-input sort-select">
-                    <option>Sort by: Featured</option>
-                    <option>Price: Low to High</option>
-                    <option>Price: High to Low</option>
-                </select>
+                <span id="shop-count">Showing @FilteredWatches.Count() watches</span>
             </div>
             
-            <div class="collections-grid">
-                @foreach(var w in Watches) {
-                    <div class="collection-card">
-                        <div class="card-image-wrapper">
-                            <img src="@w.ImageUrl" alt="@w.Name" loading="lazy" />
+            @if (IsLoading)
+            {
+                <div class="shop-loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading the collection...</p>
+                </div>
+            }
+            else
+            {
+                <div class="shop-empty-state" id="shop-empty" hidden>
+                    <p>No watches match your filters.</p>
+                </div>
+
+                <div class="collections-grid" id="shop-grid">
+                    @{ var watchIndex = 0; }
+                    @foreach (var w in FilteredWatches)
+                    {
+                        <div class="collection-card"
+                             data-watch-card="true"
+                             data-index="@watchIndex"
+                             data-name="@w.Name"
+                             data-brand="@w.Brand"
+                             data-description="@w.Description"
+                             data-price="@w.Price"
+                             data-in-stock="@w.InStock.ToString().ToLowerInvariant()">
+                            <div class="card-image-wrapper">
+                                <img src="@w.ImageUrl" alt="@w.Name" loading="lazy" />
+                            </div>
+                            <div class="card-body">
+                                <p class="watch-brand">@w.Brand</p>
+                                <h3 class="watch-name">@w.Name</h3>
+                                <p class="watch-price">$@w.Price.ToString("N0")</p>
+                                @if (w.InStock)
+                                {
+                                    <button class="add-to-cart-btn hero-cta">Add to Cart</button>
+                                }
+                                else
+                                {
+                                    <button class="add-to-cart-btn hero-cta" disabled style="opacity: 0.5; cursor: not-allowed;">Out of Stock</button>
+                                }
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <p class="watch-brand">@w.Brand</p>
-                            <h3 class="watch-name">@w.Name</h3>
-                            <p class="watch-price">$@w.Price.ToString("N0")</p>
-                            @if (w.InStock)
-                            {
-                                <button class="add-to-cart-btn hero-cta">Add to Cart</button>
-                            }
-                            else
-                            {
-                                <button class="add-to-cart-btn hero-cta" disabled style="opacity: 0.5; cursor: not-allowed;">Out of Stock</button>
-                            }
-                        </div>
-                    </div>
-                }
-            </div>
+                        watchIndex++;
+                    }
+                </div>
+            }
         </div>
         
     </div>
 </section>
 
+<script>
+(() => {
+    const searchInput = document.getElementById('shop-search');
+    const sortSelect = document.getElementById('shop-sort');
+    const resetButton = document.getElementById('shop-reset');
+    const countNode = document.getElementById('shop-count');
+    const emptyState = document.getElementById('shop-empty');
+    const grid = document.getElementById('shop-grid');
+
+    if (!searchInput || !sortSelect || !grid) {
+        return;
+    }
+
+    const brandInputs = Array.from(document.querySelectorAll('[data-brand-filter="true"]'));
+    const cards = Array.from(grid.querySelectorAll('[data-watch-card="true"]'));
+
+    const updateUrl = () => {
+        const params = new URLSearchParams();
+        const searchValue = searchInput.value.trim();
+
+        if (searchValue) {
+            params.set('q', searchValue);
+        }
+
+        if (sortSelect.value && sortSelect.value !== 'Featured') {
+            params.set('sort', sortSelect.value);
+        }
+
+        brandInputs
+            .filter(input => input.checked)
+            .forEach(input => params.append('brand', input.value));
+
+        const query = params.toString();
+        const url = `${window.location.pathname}${query ? `?${query}` : ''}`;
+        window.history.replaceState({}, '', url);
+    };
+
+    const applyFilters = (syncUrl) => {
+        const searchValue = searchInput.value.trim().toLowerCase();
+        const selectedBrands = new Set(
+            brandInputs
+                .filter(input => input.checked)
+                .map(input => input.value.toLowerCase())
+        );
+        const sortValue = sortSelect.value || 'Featured';
+
+        const visibleCards = cards.filter(card => {
+            const name = (card.dataset.name || '').toLowerCase();
+            const brand = (card.dataset.brand || '').toLowerCase();
+            const description = (card.dataset.description || '').toLowerCase();
+
+            const matchesSearch = !searchValue || name.includes(searchValue) || brand.includes(searchValue) || description.includes(searchValue);
+            const matchesBrand = selectedBrands.size === 0 || selectedBrands.has(brand);
+
+            return matchesSearch && matchesBrand;
+        });
+
+        visibleCards.sort((leftCard, rightCard) => {
+            const leftPrice = Number(leftCard.dataset.price || '0');
+            const rightPrice = Number(rightCard.dataset.price || '0');
+            const leftIndex = Number(leftCard.dataset.index || '0');
+            const rightIndex = Number(rightCard.dataset.index || '0');
+
+            if (sortValue === 'PriceAsc') {
+                return leftPrice - rightPrice || leftIndex - rightIndex;
+            }
+
+            if (sortValue === 'PriceDesc') {
+                return rightPrice - leftPrice || leftIndex - rightIndex;
+            }
+
+            return leftIndex - rightIndex;
+        });
+
+        cards.forEach(card => {
+            card.hidden = true;
+        });
+
+        visibleCards.forEach(card => {
+            card.hidden = false;
+            grid.appendChild(card);
+        });
+
+        if (countNode) {
+            countNode.textContent = `Showing ${visibleCards.length} watches`;
+        }
+
+        if (emptyState) {
+            emptyState.hidden = visibleCards.length > 0;
+        }
+
+        if (syncUrl) {
+            updateUrl();
+        }
+    };
+
+    searchInput.addEventListener('input', () => applyFilters(true));
+    sortSelect.addEventListener('change', () => applyFilters(true));
+    brandInputs.forEach(input => input.addEventListener('change', () => applyFilters(true)));
+
+    if (resetButton) {
+        resetButton.addEventListener('click', () => {
+            searchInput.value = '';
+            sortSelect.value = 'Featured';
+            brandInputs.forEach(input => {
+                input.checked = false;
+            });
+            applyFilters(true);
+            searchInput.focus();
+        });
+    }
+
+    applyFilters(false);
+})();
+</script>
+
 @code {
-    // ----------------------------------------------------
-    // Firestore Mappings (Mocked Models)
-    // ----------------------------------------------------
-    
-    public record WatchItem(string Id, string Brand, DateTime CreatedAt, string Description, string ImageUrl, bool InStock, string Model, string Movement, string Name, decimal Price);
+    public record WatchItem(
+        [property: JsonPropertyName("Id")] string Id,
+        [property: JsonPropertyName("Brand")] string Brand,
+        [property: JsonPropertyName("CreatedAt")] DateTime CreatedAt,
+        [property: JsonPropertyName("Description")] string Description,
+        [property: JsonPropertyName("ImageUrl")] string ImageUrl,
+        [property: JsonPropertyName("InStock")] bool InStock,
+        [property: JsonPropertyName("Model")] string Model,
+        [property: JsonPropertyName("Movement")] string Movement,
+        [property: JsonPropertyName("Name")] string Name,
+        [property: JsonPropertyName("Price")] decimal Price
+    );
+
     public record BrandItem(string Id, string Description, string LogoUrl, string Name);
-    
+
     public List<BrandItem> Brands = new()
     {
-        new BrandItem("1", "Swiss luxury watchmaker.", "https://example.com/rolex.png", "Rolex"),
-        new BrandItem("2", "Innovative Swiss luxury watches.", "https://example.com/omega.png", "Omega"),
-        new BrandItem("3", "Unparalleled craftsmanship.", "https://example.com/patek.png", "Patek Philippe"),
-        new BrandItem("4", "Redefining luxury.", "https://example.com/ap.png", "Audemars Piguet"),
-        new BrandItem("5", "Master of shapes.", "https://example.com/cartier.png", "Cartier")
+        new BrandItem("1", "Swiss luxury watchmaker.", "", "Rolex"),
+        new BrandItem("2", "Innovative Swiss luxury watches.", "", "Omega"),
+        new BrandItem("3", "Unparalleled craftsmanship.", "", "Patek Philippe"),
+        new BrandItem("4", "Redefining luxury.", "", "Audemars Piguet"),
+        new BrandItem("5", "Master of shapes.", "", "Cartier")
     };
-    
-    public List<WatchItem> Watches = new()
+
+    public List<WatchItem> Watches { get; set; } = new();
+    public bool IsLoading { get; set; } = true;
+
+    [Microsoft.AspNetCore.Components.SupplyParameterFromQuery(Name = "q")]
+    public string? SearchQuery { get; set; }
+
+    [Microsoft.AspNetCore.Components.SupplyParameterFromQuery(Name = "sort")]
+    public string? CurrentSort { get; set; }
+
+    [Microsoft.AspNetCore.Components.SupplyParameterFromQuery(Name = "brand")]
+    public string[]? SelectedBrandNames { get; set; }
+
+    public HashSet<string> SelectedBrands { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+    protected override async Task OnInitializedAsync()
     {
-        new WatchItem("W1", "Rolex", DateTime.UtcNow, "The legendary diving watch.", "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&q=80&w=800", true, "Submariner Date", "Automatic", "Submariner Date", 14500m),
-        new WatchItem("W2", "Omega", DateTime.UtcNow, "A tribute to maritime legacy.", "https://images.unsplash.com/photo-1547996160-81dfa63595aa?auto=format&fit=crop&q=80&w=800", true, "Seamaster Aqua Terra", "Automatic", "Seamaster Aqua Terra", 8200m),
-        new WatchItem("W3", "Patek Philippe", DateTime.UtcNow, "Classic elegance.", "https://images.unsplash.com/photo-1622434641406-a158123450f9?auto=format&fit=crop&q=80&w=800", false, "Calatrava", "Manual", "Calatrava", 35000m),
-        new WatchItem("W4", "Audemars Piguet", DateTime.UtcNow, "The icon of luxury sports.", "https://images.unsplash.com/photo-1548171915-e7af554471f4?auto=format&fit=crop&q=80&w=800", true, "Royal Oak", "Automatic", "Royal Oak", 42000m),
-        new WatchItem("W5", "Cartier", DateTime.UtcNow, "Timeless rectangular design.", "https://images.unsplash.com/photo-1509048191080-d2984bad6ae5?auto=format&fit=crop&q=80&w=800", true, "Tank Must", "Quartz", "Tank Must", 6800m),
-        new WatchItem("W6", "Rolex", DateTime.UtcNow, "The ultimate racing chronograph.", "https://images.unsplash.com/photo-1587836374828-cb4387df3eb7?auto=format&fit=crop&q=80&w=800", false, "Daytona Cosmograph", "Automatic", "Daytona Cosmograph", 22500m)
-    };
+        try
+        {
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var path = System.IO.Path.Combine(Env.WebRootPath, "data", "watches.json");
+            var json = await System.IO.File.ReadAllTextAsync(path);
+            Watches = JsonSerializer.Deserialize<List<WatchItem>>(json, options) ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load watches.json: {ex.Message}");
+            Watches = new();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        SearchQuery = SearchQuery?.Trim() ?? string.Empty;
+        CurrentSort = string.IsNullOrWhiteSpace(CurrentSort) ? "Featured" : CurrentSort;
+        SelectedBrands = SelectedBrandNames is null
+            ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            : SelectedBrandNames.Where(brand => !string.IsNullOrWhiteSpace(brand))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
+    public IEnumerable<WatchItem> FilteredWatches
+    {
+        get
+        {
+            var query = Watches.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(SearchQuery))
+            {
+                var lowerSearch = SearchQuery.ToLowerInvariant();
+                query = query.Where(w =>
+                    w.Name.ToLowerInvariant().Contains(lowerSearch) ||
+                    w.Brand.ToLowerInvariant().Contains(lowerSearch) ||
+                    w.Description.ToLowerInvariant().Contains(lowerSearch)
+                );
+            }
+
+            if (SelectedBrands.Any())
+            {
+                query = query.Where(w => SelectedBrands.Contains(w.Brand));
+            }
+
+            return CurrentSort switch
+            {
+                "PriceAsc" => query.OrderBy(w => w.Price),
+                "PriceDesc" => query.OrderByDescending(w => w.Price),
+                _ => query
+            };
+        }
+    }
+
 }
