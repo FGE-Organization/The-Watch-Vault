@@ -250,3 +250,29 @@
         flex: none;
     }
 }
+
+/* ============ Loading State ============ */
+.shop-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    padding: 6rem 2rem;
+    color: var(--wv-text-muted);
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+}
+
+.loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid var(--wv-card-border);
+    border-top-color: var(--wv-gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}

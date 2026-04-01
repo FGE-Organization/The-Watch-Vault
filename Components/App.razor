@@ -10,12 +10,12 @@
     <link rel="stylesheet" href="@Assets["The-Watch-Vault.styles.css"]" />
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
-    <HeadOutlet />
+    <HeadOutlet @rendermode="InteractiveServer" />
 </head>
 
 <body>
-    <Routes />
-    <script src="_framework/blazor.web.js"></script>
+    <Routes @rendermode="InteractiveServer" />
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
 </body>
 
 </html>

@@ -49,6 +49,12 @@ builder.Services.Configure<CookiePolicyOptions>(options =>
     options.MinimumSameSitePolicy = SameSiteMode.None;
 });
 
+builder.Services.AddScoped(sp =>
+{
+    var navMan = sp.GetRequiredService<Microsoft.AspNetCore.Components.NavigationManager>();
+    return new HttpClient { BaseAddress = new Uri(navMan.BaseUri) };
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -59,7 +65,8 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+// Note: MapStaticAssets() below handles all static file serving in .NET 9,
+// including the Blazor framework files (blazor.web.js). UseStaticFiles() is not needed.
 
 app.UseRouting();
 
