@@ -1,4 +1,5 @@
 @page "/shop"
+@rendermode InteractiveServer
 
 <PageTitle>Shop — The Watch Vault</PageTitle>
 
@@ -18,12 +19,16 @@
         <aside class="shop-filters">
             <div class="filter-box">
                 <div class="filter-group">
+                    <h3>Search</h3>
+                    <input type="search" class="form-input search-input" placeholder="Search by name or brand..." @bind="SearchQuery" @bind:event="oninput" />
+                </div>
+                <div class="filter-group">
                     <h3>Brands</h3>
                     <ul>
                         @foreach(var b in Brands) {
                             <li>
                                 <label class="checkbox-label">
-                                    <input type="checkbox" class="form-checkbox" />
+                                    <input type="checkbox" class="form-checkbox" checked="@SelectedBrands.Contains(b.Name)" @onchange="@(e => ToggleBrand(b.Name, e.Value))" />
                                     <span>@b.Name</span>
                                 </label>
                             </li>
@@ -37,16 +42,16 @@
         <!-- Main Grid -->
         <div class="shop-grid-area">
             <div class="shop-toolbar">
-                <span>Showing @Watches.Count watches</span>
-                <select class="form-input sort-select">
-                    <option>Sort by: Featured</option>
-                    <option>Price: Low to High</option>
-                    <option>Price: High to Low</option>
+                <span>Showing @FilteredWatches.Count() watches</span>
+                <select class="form-input sort-select" @bind="CurrentSort">
+                    <option value="Featured">Sort by: Featured</option>
+                    <option value="PriceAsc">Price: Low to High</option>
+                    <option value="PriceDesc">Price: High to Low</option>
                 </select>
             </div>
             
             <div class="collections-grid">
-                @foreach(var w in Watches) {
+                @foreach(var w in FilteredWatches) {
                     <div class="collection-card">
                         <div class="card-image-wrapper">
                             <img src="@w.ImageUrl" alt="@w.Name" loading="lazy" />
@@ -98,4 +103,53 @@
         new WatchItem("W5", "Cartier", DateTime.UtcNow, "Timeless rectangular design.", "https://images.unsplash.com/photo-1509048191080-d2984bad6ae5?auto=format&fit=crop&q=80&w=800", true, "Tank Must", "Quartz", "Tank Must", 6800m),
         new WatchItem("W6", "Rolex", DateTime.UtcNow, "The ultimate racing chronograph.", "https://images.unsplash.com/photo-1587836374828-cb4387df3eb7?auto=format&fit=crop&q=80&w=800", false, "Daytona Cosmograph", "Automatic", "Daytona Cosmograph", 22500m)
     };
+
+    public string SearchQuery { get; set; } = string.Empty;
+    public HashSet<string> SelectedBrands { get; set; } = new();
+    public string CurrentSort { get; set; } = "Featured";
+
+    public IEnumerable<WatchItem> FilteredWatches
+    {
+        get
+        {
+            var query = Watches.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(SearchQuery))
+            {
+                var lowerSearch = SearchQuery.ToLowerInvariant();
+                query = query.Where(w => 
+                    w.Name.ToLowerInvariant().Contains(lowerSearch) || 
+                    w.Brand.ToLowerInvariant().Contains(lowerSearch) ||
+                    w.Description.ToLowerInvariant().Contains(lowerSearch)
+                );
+            }
+
+            if (SelectedBrands.Any())
+            {
+                query = query.Where(w => SelectedBrands.Contains(w.Brand));
+            }
+
+            return CurrentSort switch
+            {
+                "PriceAsc" => query.OrderBy(w => w.Price),
+                "PriceDesc" => query.OrderByDescending(w => w.Price),
+                _ => query // Featured (default order)
+            };
+        }
+    }
+
+    private void ToggleBrand(string brandName, object? checkedValue)
+    {
+        if (checkedValue is bool isChecked)
+        {
+            if (isChecked)
+            {
+                SelectedBrands.Add(brandName);
+            }
+            else
+            {
+                SelectedBrands.Remove(brandName);
+            }
+        }
+    }
 }

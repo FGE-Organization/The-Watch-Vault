@@ -138,6 +138,28 @@
     cursor: pointer;
 }
 
+.search-input {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    font-size: 0.95rem;
+    font-family: 'Inter', sans-serif;
+    color: var(--wv-text);
+    background: var(--wv-dark-2);
+    border: 1px solid var(--wv-card-border);
+    border-radius: 8px;
+    outline: none;
+    transition: border-color var(--wv-transition), box-shadow var(--wv-transition);
+}
+
+.search-input::placeholder {
+    color: var(--wv-text-muted);
+}
+
+.search-input:hover, .search-input:focus {
+    border-color: var(--wv-gold);
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.1);
+}
+
 /* ============ Grid Area & Toolbar ============ */
 .shop-grid-area {
     flex: 1;
