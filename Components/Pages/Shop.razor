@@ -1,0 +1,101 @@
+@page "/shop"
+
+<PageTitle>Shop — The Watch Vault</PageTitle>
+
+<section class="shop-hero">
+    <div class="shop-hero-backdrop"></div>
+    <div class="shop-hero-content">
+        <p class="shop-tagline">Curated Selection</p>
+        <h1 class="shop-title">The Collection</h1>
+        <p class="shop-subtitle">Discover our exclusive range of luxury timepieces gracefully mapped from the Vault.</p>
+    </div>
+</section>
+
+<section class="shop-main">
+    <div class="shop-container">
+        
+        <!-- Sidebar Filters -->
+        <aside class="shop-filters">
+            <div class="filter-box">
+                <div class="filter-group">
+                    <h3>Brands</h3>
+                    <ul>
+                        @foreach(var b in Brands) {
+                            <li>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" class="form-checkbox" />
+                                    <span>@b.Name</span>
+                                </label>
+                            </li>
+                        }
+                    </ul>
+                </div>
+                
+            </div>
+        </aside>
+
+        <!-- Main Grid -->
+        <div class="shop-grid-area">
+            <div class="shop-toolbar">
+                <span>Showing @Watches.Count watches</span>
+                <select class="form-input sort-select">
+                    <option>Sort by: Featured</option>
+                    <option>Price: Low to High</option>
+                    <option>Price: High to Low</option>
+                </select>
+            </div>
+            
+            <div class="collections-grid">
+                @foreach(var w in Watches) {
+                    <div class="collection-card">
+                        <div class="card-image-wrapper">
+                            <img src="@w.ImageUrl" alt="@w.Name" loading="lazy" />
+                        </div>
+                        <div class="card-body">
+                            <p class="watch-brand">@w.Brand</p>
+                            <h3 class="watch-name">@w.Name</h3>
+                            <p class="watch-price">$@w.Price.ToString("N0")</p>
+                            @if (w.InStock)
+                            {
+                                <button class="add-to-cart-btn hero-cta">Add to Cart</button>
+                            }
+                            else
+                            {
+                                <button class="add-to-cart-btn hero-cta" disabled style="opacity: 0.5; cursor: not-allowed;">Out of Stock</button>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+        
+    </div>
+</section>
+
+@code {
+    // ----------------------------------------------------
+    // Firestore Mappings (Mocked Models)
+    // ----------------------------------------------------
+    
+    public record WatchItem(string Id, string Brand, DateTime CreatedAt, string Description, string ImageUrl, bool InStock, string Model, string Movement, string Name, decimal Price);
+    public record BrandItem(string Id, string Description, string LogoUrl, string Name);
+    
+    public List<BrandItem> Brands = new()
+    {
+        new BrandItem("1", "Swiss luxury watchmaker.", "https://example.com/rolex.png", "Rolex"),
+        new BrandItem("2", "Innovative Swiss luxury watches.", "https://example.com/omega.png", "Omega"),
+        new BrandItem("3", "Unparalleled craftsmanship.", "https://example.com/patek.png", "Patek Philippe"),
+        new BrandItem("4", "Redefining luxury.", "https://example.com/ap.png", "Audemars Piguet"),
+        new BrandItem("5", "Master of shapes.", "https://example.com/cartier.png", "Cartier")
+    };
+    
+    public List<WatchItem> Watches = new()
+    {
+        new WatchItem("W1", "Rolex", DateTime.UtcNow, "The legendary diving watch.", "https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&q=80&w=800", true, "Submariner Date", "Automatic", "Submariner Date", 14500m),
+        new WatchItem("W2", "Omega", DateTime.UtcNow, "A tribute to maritime legacy.", "https://images.unsplash.com/photo-1547996160-81dfa63595aa?auto=format&fit=crop&q=80&w=800", true, "Seamaster Aqua Terra", "Automatic", "Seamaster Aqua Terra", 8200m),
+        new WatchItem("W3", "Patek Philippe", DateTime.UtcNow, "Classic elegance.", "https://images.unsplash.com/photo-1622434641406-a158123450f9?auto=format&fit=crop&q=80&w=800", false, "Calatrava", "Manual", "Calatrava", 35000m),
+        new WatchItem("W4", "Audemars Piguet", DateTime.UtcNow, "The icon of luxury sports.", "https://images.unsplash.com/photo-1548171915-e7af554471f4?auto=format&fit=crop&q=80&w=800", true, "Royal Oak", "Automatic", "Royal Oak", 42000m),
+        new WatchItem("W5", "Cartier", DateTime.UtcNow, "Timeless rectangular design.", "https://images.unsplash.com/photo-1509048191080-d2984bad6ae5?auto=format&fit=crop&q=80&w=800", true, "Tank Must", "Quartz", "Tank Must", 6800m),
+        new WatchItem("W6", "Rolex", DateTime.UtcNow, "The ultimate racing chronograph.", "https://images.unsplash.com/photo-1587836374828-cb4387df3eb7?auto=format&fit=crop&q=80&w=800", false, "Daytona Cosmograph", "Automatic", "Daytona Cosmograph", 22500m)
+    };
+}

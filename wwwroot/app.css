@@ -17,6 +17,30 @@
     --wv-transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+[data-theme="light"] {
+    --wv-dark: #f8f9fa;
+    --wv-dark-2: #ffffff;
+    --wv-dark-3: #e9ecef;
+    --wv-gold: #b38b22;
+    --wv-gold-light: #c9a84c;
+    --wv-gold-dim: rgba(201, 168, 76, 0.1);
+    --wv-text: #212529;
+    --wv-text-muted: #6c757d;
+    --wv-gradient: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+    --wv-card-bg: rgba(0, 0, 0, 0.02);
+    --wv-card-border: rgba(0, 0, 0, 0.08);
+}
+
+/* Ensure Login page stays completely dark to protect teammate's design */
+[data-theme="light"] .login-section {
+    --wv-dark: #0a0a0f;
+    --wv-dark-2: #12121c;
+    --wv-dark-3: #1a1a2e;
+    --wv-text: #e8e6e3;
+    --wv-text-muted: #9a9a9a;
+    --wv-card-bg: rgba(255, 255, 255, 0.04);
+}
+
 html {
     scroll-behavior: smooth;
 }
@@ -28,6 +52,7 @@ body {
     padding: 0;
     background: var(--wv-dark);
     color: var(--wv-text);
+    transition: background-color var(--wv-transition), color var(--wv-transition);
 }
 
 a,
@@ -431,4 +456,37 @@ h1:focus {
     .footer-links {
         justify-content: center;
     }
+}
+
+/* ============ Theme Toggle ============ */
+.theme-toggle {
+    background: var(--wv-card-bg);
+    border: 1px solid var(--wv-card-border);
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--wv-text);
+    transition: all var(--wv-transition);
+    padding: 0;
+    margin-left: 1rem;
+}
+
+.theme-toggle:hover {
+    background: var(--wv-gold-dim);
+    border-color: var(--wv-gold);
+    transform: translateY(-2px);
+}
+
+.theme-icon-light { display: none; }
+.theme-icon-dark { display: inline; }
+
+[data-theme="light"] .theme-icon-light { display: inline; }
+[data-theme="light"] .theme-icon-dark { display: none; }
+
+[data-theme="light"] .theme-toggle {
+    background: #e9ecef;
 }
