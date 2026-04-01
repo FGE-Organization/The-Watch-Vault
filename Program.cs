@@ -1,4 +1,5 @@
 using The_Watch_Vault.Components;
+using The_Watch_Vault.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
@@ -8,6 +9,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Register the user repository (using in-memory storage for now)
+// This can be easily swapped to a database implementation later
+builder.Services.AddSingleton<IUserRepository, InMemoryUserRepository>();
 
 builder.Services.AddAuthentication(options =>
 {
@@ -35,7 +40,7 @@ builder.Services.AddAuthentication(options =>
 
     options.CallbackPath = "/signin-google";
 
-    //FIX FOR "oauth state missing"
+    // 🔥 CRITICAL FIX FOR "oauth state missing"
     options.CorrelationCookie.SameSite = SameSiteMode.None;
     options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
 
