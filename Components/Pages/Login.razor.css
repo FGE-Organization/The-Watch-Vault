@@ -85,7 +85,7 @@
 }
 
 /* Modern input fields: dark theme, consistent styling */
-.form-input {
+::deep .form-input {
     width: 100%;
     padding: 1rem 1.25rem;
     font-family: 'Inter', sans-serif;
@@ -100,17 +100,17 @@
     appearance: none;
 }
 
-.form-input::placeholder {
+::deep .form-input::placeholder {
     color: var(--wv-text-muted);
     opacity: 0.8;
 }
 
-.form-input:hover {
+::deep .form-input:hover {
     border-color: rgba(255, 255, 255, 0.18);
     background: rgba(26, 26, 46, 0.9);
 }
 
-.form-input:focus {
+::deep .form-input:focus {
     outline: none;
     border-color: var(--wv-gold);
     box-shadow: 0 0 0 3px var(--wv-gold-dim);
@@ -118,10 +118,10 @@
 }
 
 /* Override browser autofill to match dark theme */
-.form-input:-webkit-autofill,
-.form-input:-webkit-autofill:hover,
-.form-input:-webkit-autofill:focus,
-.form-input:-webkit-autofill:active {
+::deep .form-input:-webkit-autofill,
+::deep .form-input:-webkit-autofill:hover,
+::deep .form-input:-webkit-autofill:focus,
+::deep .form-input:-webkit-autofill:active {
     -webkit-text-fill-color: var(--wv-text);
     -webkit-box-shadow: 0 0 0 30px var(--wv-dark-2) inset;
     caret-color: var(--wv-text);
@@ -149,12 +149,54 @@
     user-select: none;
 }
 
-.form-checkbox {
+::deep .form-checkbox {
     width: 18px;
     height: 18px;
-    accent-color: var(--wv-gold);
+    margin: 0;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 6px;
+    background: rgba(18, 18, 28, 0.9);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    appearance: none;
+    -webkit-appearance: none;
     cursor: pointer;
     flex-shrink: 0;
+    display: grid;
+    place-content: center;
+    transition: all var(--wv-transition);
+}
+
+::deep .form-checkbox:hover {
+    border-color: rgba(201, 168, 76, 0.6);
+    background: rgba(24, 24, 38, 0.98);
+}
+
+::deep .form-checkbox:focus {
+    outline: none;
+    border-color: var(--wv-gold);
+    box-shadow: 0 0 0 3px var(--wv-gold-dim);
+}
+
+::deep .form-checkbox:checked {
+    background: linear-gradient(135deg, var(--wv-gold-light), var(--wv-gold));
+    border-color: var(--wv-gold);
+}
+
+::deep .form-checkbox:checked::after {
+    content: '';
+    width: 6px;
+    height: 10px;
+    border: solid var(--wv-dark);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg) translate(-1px, -1px);
+}
+
+::deep .form-checkbox:checked:hover {
+    box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.12);
+}
+
+::deep .checkbox-label:hover .form-checkbox {
+    border-color: rgba(201, 168, 76, 0.45);
 }
 
 .forgot-link {
