@@ -110,7 +110,7 @@
     letter-spacing: 0.3px;
 }
 
-.form-input {
+::deep .form-input {
     width: 100%;
     padding: 1rem 1.25rem;
     font-family: 'Inter', sans-serif;
@@ -125,17 +125,17 @@
     appearance: none;
 }
 
-.form-input::placeholder {
+::deep .form-input::placeholder {
     color: var(--wv-text-muted);
     opacity: 0.8;
 }
 
-.form-input:hover {
+::deep .form-input:hover {
     border-color: rgba(255, 255, 255, 0.18);
     background: rgba(26, 26, 46, 0.9);
 }
 
-.form-input:focus {
+::deep .form-input:focus {
     outline: none;
     border-color: var(--wv-gold);
     box-shadow: 0 0 0 3px var(--wv-gold-dim);
