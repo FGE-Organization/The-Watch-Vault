@@ -1,6 +1,7 @@
 @page "/shop"
-@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Components.ExcludeFromInteractiveRouting]
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+@using System.Linq
 @using System.Text.Json
 @using System.Text.Json.Serialization
 
@@ -17,42 +18,46 @@
 
 <section class="shop-main">
     <div class="shop-container">
-        
-        <!-- Sidebar Filters -->
-        <aside class="shop-filters">
+        <div class="shop-filters">
             <div class="filter-box">
                 <div class="filter-group">
                     <h3>Search</h3>
-                    <input type="search" class="form-input search-input" placeholder="Search by name or brand..." @bind="SearchQuery" @bind:event="oninput" />
+                    <input id="shop-search" type="search" class="form-input search-input" value="@SearchQuery" placeholder="Search by name or brand..." autocomplete="off" />
                 </div>
                 <div class="filter-group">
                     <h3>Brands</h3>
                     <ul>
-                        @foreach(var b in Brands) {
+                        @foreach (var b in Brands)
+                        {
                             <li>
                                 <label class="checkbox-label">
-                                    <input type="checkbox" class="form-checkbox"
-                                           checked="@SelectedBrands.Contains(b.Name)"
-                                           @onchange="@((e) => ToggleBrand(b.Name, (bool)e.Value!))" />
+                                    <input type="checkbox"
+                                           class="form-checkbox"
+                                           data-brand-filter="true"
+                                           value="@b.Name"
+                                           checked="@SelectedBrands.Contains(b.Name)" />
                                     <span>@b.Name</span>
                                 </label>
                             </li>
                         }
                     </ul>
                 </div>
-                
+                <div class="filter-group">
+                    <h3>Sort</h3>
+                    <select id="shop-sort" class="form-input sort-select">
+                        <option value="Featured" selected="@(CurrentSort == "Featured")">Sort by: Featured</option>
+                        <option value="PriceAsc" selected="@(CurrentSort == "PriceAsc")">Price: Low to High</option>
+                        <option value="PriceDesc" selected="@(CurrentSort == "PriceDesc")">Price: High to Low</option>
+                    </select>
+                </div>
+                <button id="shop-reset" type="button" class="hero-cta" style="width: 100%;">Reset Filters</button>
             </div>
-        </aside>
+        </div>
 
         <!-- Main Grid -->
         <div class="shop-grid-area">
             <div class="shop-toolbar">
-                <span>Showing @FilteredWatches.Count() watches</span>
-                <select class="form-input sort-select" @bind="CurrentSort">
-                    <option value="Featured">Sort by: Featured</option>
-                    <option value="PriceAsc">Price: Low to High</option>
-                    <option value="PriceDesc">Price: High to Low</option>
-                </select>
+                <span id="shop-count">Showing @FilteredWatches.Count() watches</span>
             </div>
             
             @if (IsLoading)
@@ -64,9 +69,22 @@
             }
             else
             {
-                <div class="collections-grid">
-                    @foreach(var w in FilteredWatches) {
-                        <div class="collection-card">
+                <div class="shop-empty-state" id="shop-empty" hidden>
+                    <p>No watches match your filters.</p>
+                </div>
+
+                <div class="collections-grid" id="shop-grid">
+                    @{ var watchIndex = 0; }
+                    @foreach (var w in FilteredWatches)
+                    {
+                        <div class="collection-card"
+                             data-watch-card="true"
+                             data-index="@watchIndex"
+                             data-name="@w.Name"
+                             data-brand="@w.Brand"
+                             data-description="@w.Description"
+                             data-price="@w.Price"
+                             data-in-stock="@w.InStock.ToString().ToLowerInvariant()">
                             <div class="card-image-wrapper">
                                 <img src="@w.ImageUrl" alt="@w.Name" loading="lazy" />
                             </div>
@@ -84,6 +102,7 @@
                                 }
                             </div>
                         </div>
+                        watchIndex++;
                     }
                 </div>
             }
@@ -91,6 +110,122 @@
         
     </div>
 </section>
+
+<script>
+(() => {
+    const searchInput = document.getElementById('shop-search');
+    const sortSelect = document.getElementById('shop-sort');
+    const resetButton = document.getElementById('shop-reset');
+    const countNode = document.getElementById('shop-count');
+    const emptyState = document.getElementById('shop-empty');
+    const grid = document.getElementById('shop-grid');
+
+    if (!searchInput || !sortSelect || !grid) {
+        return;
+    }
+
+    const brandInputs = Array.from(document.querySelectorAll('[data-brand-filter="true"]'));
+    const cards = Array.from(grid.querySelectorAll('[data-watch-card="true"]'));
+
+    const updateUrl = () => {
+        const params = new URLSearchParams();
+        const searchValue = searchInput.value.trim();
+
+        if (searchValue) {
+            params.set('q', searchValue);
+        }
+
+        if (sortSelect.value && sortSelect.value !== 'Featured') {
+            params.set('sort', sortSelect.value);
+        }
+
+        brandInputs
+            .filter(input => input.checked)
+            .forEach(input => params.append('brand', input.value));
+
+        const query = params.toString();
+        const url = `${window.location.pathname}${query ? `?${query}` : ''}`;
+        window.history.replaceState({}, '', url);
+    };
+
+    const applyFilters = (syncUrl) => {
+        const searchValue = searchInput.value.trim().toLowerCase();
+        const selectedBrands = new Set(
+            brandInputs
+                .filter(input => input.checked)
+                .map(input => input.value.toLowerCase())
+        );
+        const sortValue = sortSelect.value || 'Featured';
+
+        const visibleCards = cards.filter(card => {
+            const name = (card.dataset.name || '').toLowerCase();
+            const brand = (card.dataset.brand || '').toLowerCase();
+            const description = (card.dataset.description || '').toLowerCase();
+
+            const matchesSearch = !searchValue || name.includes(searchValue) || brand.includes(searchValue) || description.includes(searchValue);
+            const matchesBrand = selectedBrands.size === 0 || selectedBrands.has(brand);
+
+            return matchesSearch && matchesBrand;
+        });
+
+        visibleCards.sort((leftCard, rightCard) => {
+            const leftPrice = Number(leftCard.dataset.price || '0');
+            const rightPrice = Number(rightCard.dataset.price || '0');
+            const leftIndex = Number(leftCard.dataset.index || '0');
+            const rightIndex = Number(rightCard.dataset.index || '0');
+
+            if (sortValue === 'PriceAsc') {
+                return leftPrice - rightPrice || leftIndex - rightIndex;
+            }
+
+            if (sortValue === 'PriceDesc') {
+                return rightPrice - leftPrice || leftIndex - rightIndex;
+            }
+
+            return leftIndex - rightIndex;
+        });
+
+        cards.forEach(card => {
+            card.hidden = true;
+        });
+
+        visibleCards.forEach(card => {
+            card.hidden = false;
+            grid.appendChild(card);
+        });
+
+        if (countNode) {
+            countNode.textContent = `Showing ${visibleCards.length} watches`;
+        }
+
+        if (emptyState) {
+            emptyState.hidden = visibleCards.length > 0;
+        }
+
+        if (syncUrl) {
+            updateUrl();
+        }
+    };
+
+    searchInput.addEventListener('input', () => applyFilters(true));
+    sortSelect.addEventListener('change', () => applyFilters(true));
+    brandInputs.forEach(input => input.addEventListener('change', () => applyFilters(true)));
+
+    if (resetButton) {
+        resetButton.addEventListener('click', () => {
+            searchInput.value = '';
+            sortSelect.value = 'Featured';
+            brandInputs.forEach(input => {
+                input.checked = false;
+            });
+            applyFilters(true);
+            searchInput.focus();
+        });
+    }
+
+    applyFilters(false);
+})();
+</script>
 
 @code {
     public record WatchItem(
@@ -120,9 +255,16 @@
     public List<WatchItem> Watches { get; set; } = new();
     public bool IsLoading { get; set; } = true;
 
-    public string SearchQuery { get; set; } = string.Empty;
-    public HashSet<string> SelectedBrands { get; set; } = new();
-    public string CurrentSort { get; set; } = "Featured";
+    [Microsoft.AspNetCore.Components.SupplyParameterFromQuery(Name = "q")]
+    public string? SearchQuery { get; set; }
+
+    [Microsoft.AspNetCore.Components.SupplyParameterFromQuery(Name = "sort")]
+    public string? CurrentSort { get; set; }
+
+    [Microsoft.AspNetCore.Components.SupplyParameterFromQuery(Name = "brand")]
+    public string[]? SelectedBrandNames { get; set; }
+
+    public HashSet<string> SelectedBrands { get; set; } = new(StringComparer.OrdinalIgnoreCase);
 
     protected override async Task OnInitializedAsync()
     {
@@ -142,6 +284,16 @@
         {
             IsLoading = false;
         }
+    }
+
+    protected override void OnParametersSet()
+    {
+        SearchQuery = SearchQuery?.Trim() ?? string.Empty;
+        CurrentSort = string.IsNullOrWhiteSpace(CurrentSort) ? "Featured" : CurrentSort;
+        SelectedBrands = SelectedBrandNames is null
+            ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            : SelectedBrandNames.Where(brand => !string.IsNullOrWhiteSpace(brand))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 
     public IEnumerable<WatchItem> FilteredWatches
@@ -174,9 +326,4 @@
         }
     }
 
-    private void ToggleBrand(string brandName, bool isChecked)
-    {
-        if (isChecked) SelectedBrands.Add(brandName);
-        else SelectedBrands.Remove(brandName);
-    }
 }

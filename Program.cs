@@ -65,8 +65,8 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-// Note: MapStaticAssets() below handles all static file serving in .NET 9,
-// including the Blazor framework files (blazor.web.js). UseStaticFiles() is not needed.
+app.UseStaticFiles();
+// Note: MapStaticAssets() below handles the remaining static assets in .NET 9.
 
 app.UseRouting();
 
@@ -75,9 +75,9 @@ app.UseCookiePolicy();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
-app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+app.MapStaticAssets();
 
 // OAuth endpoints - these bypass the normal flow and work with anti-forgery
 app.MapGet("/login-google", async (HttpContext context) =>

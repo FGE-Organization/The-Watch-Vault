@@ -177,6 +177,16 @@
     color: var(--wv-text-muted);
 }
 
+.shop-empty-state {
+    margin-bottom: 1rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--wv-card-border);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--wv-text-muted);
+    font-family: 'Inter', sans-serif;
+}
+
 .sort-select {
     width: auto;
     padding: 0.5rem 1rem;
