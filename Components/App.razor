@@ -15,26 +15,7 @@
 
 <body>
     <Routes />
-    <script>
-        window.themeManager = {
-            init() {
-                const isLight = localStorage.getItem('theme') === 'light';
-                if (isLight) {
-                    document.documentElement.setAttribute('data-theme', 'light');
-                }
-            },
-            toggle() {
-                const current = document.documentElement.getAttribute('data-theme');
-                const next = current === 'light' ? 'dark' : 'light';
-                document.documentElement.setAttribute('data-theme', next);
-                localStorage.setItem('theme', next);
-            },
-            isLight() {
-                return document.documentElement.getAttribute('data-theme') === 'light';
-            }
-        };
-        themeManager.init();
-    </script>
     <script src="_framework/blazor.web.js"></script>
 </body>
+
 </html>
