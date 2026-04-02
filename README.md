@@ -21,7 +21,5 @@
         - Shopping Page
             - Search and filter functionality
             - Watch selection view
-    - Dynamo DB for user account and watch data management
-    - AWS for cloud hosting the pages and database
 
 - __Non-Functional Requirements__: Use .NET features to make site secure and efficient on usage.
