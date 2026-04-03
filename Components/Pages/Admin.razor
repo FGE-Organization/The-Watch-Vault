@@ -1,0 +1,146 @@
+@page "/admin"
+@attribute [Microsoft.AspNetCore.Components.ExcludeFromInteractiveRouting]
+@layout AdminLayout
+@inject The_Watch_Vault.Services.FirestoreService FirestoreService
+@inject NavigationManager Navigation
+@using The_Watch_Vault.Services
+@using The_Watch_Vault.Components.Layout
+
+<PageTitle>Admin — The Watch Vault</PageTitle>
+
+<section class="admin-section" style="padding: 6rem 2rem 2rem; max-width: 1200px; margin: 0 auto;">
+    <div style="margin-bottom:2rem;">
+        <p style="color:var(--wv-gold); font-size:0.8rem; letter-spacing:0.2em; text-transform:uppercase; margin-bottom:0.5rem;">Admin View</p>
+        <h1 style="font-size:2rem;">Admin Dashboard</h1>
+    </div>
+
+    @if (Status == "updated") { <p style="color:#2ecc71;margin-bottom:1rem;">Stock status updated.</p> }
+    @if (Status == "deleted") { <p style="color:#2ecc71;margin-bottom:1rem;">Watch deleted.</p> }
+    @if (Status == "added")   { <p style="color:#2ecc71;margin-bottom:1rem;">Watch added successfully.</p> }
+
+    <!-- Search filter (GET form) -->
+    <form method="get" action="/admin" style="display:flex; gap:1rem; margin-bottom:1rem;">
+        <input name="brand" value="@FilterBrand" placeholder="Filter by brand..." class="form-input" style="flex:1;" />
+        <input name="model" value="@FilterModel" placeholder="Filter by model..." class="form-input" style="flex:1;" />
+        <button type="submit" class="hero-cta" style="padding:0.4rem 1.2rem;">Search</button>
+        <a href="/admin" class="hero-cta" style="padding:0.4rem 1.2rem; text-decoration:none;">Clear</a>
+    </form>
+
+    <h2 style="font-size:1.4rem; margin-bottom:1rem;">Current Inventory (@FilteredWatches.Count of @Watches.Count watches)</h2>
+
+    @if (IsLoading)
+    {
+        <p>Loading inventory...</p>
+    }
+    else
+    {
+        <div style="overflow-x:auto; margin-bottom:3rem;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+                <thead>
+                    <tr style="border-bottom:1px solid #333; text-align:left;">
+                        <th style="padding:0.5rem 1rem;">Brand</th>
+                        <th style="padding:0.5rem 1rem;">Name</th>
+                        <th style="padding:0.5rem 1rem;">Model</th>
+                        <th style="padding:0.5rem 1rem;">Price</th>
+                        <th style="padding:0.5rem 1rem;">In Stock</th>
+                        <th style="padding:0.5rem 1rem;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var w in FilteredWatches)
+                    {
+                        <tr style="border-bottom:1px solid #222;">
+                            <td style="padding:0.5rem 1rem;">@w.Brand</td>
+                            <td style="padding:0.5rem 1rem;">@w.Name</td>
+                            <td style="padding:0.5rem 1rem;">@w.Model</td>
+                            <td style="padding:0.5rem 1rem;">$@w.Price.ToString("N0")</td>
+                            <td style="padding:0.5rem 1rem;">
+                                <form method="post" action="/admin/toggle-instock">
+                                    <input type="hidden" name="id" value="@w.Id" />
+                                    <input type="hidden" name="current" value="@w.InStock.ToString().ToLowerInvariant()" />
+                                    <button type="submit"
+                                            style="background:@(w.InStock ? "#2ecc71" : "#e74c3c"); color:#fff; border:none; padding:0.3rem 0.8rem; cursor:pointer; border-radius:4px; min-width:90px;">
+                                        @(w.InStock ? "In Stock" : "Out of Stock")
+                                    </button>
+                                </form>
+                            </td>
+                            <td style="padding:0.5rem 1rem;">
+                                <form method="post" action="/admin/delete-watch">
+                                    <input type="hidden" name="id" value="@w.Id" />
+                                    <button type="submit"
+                                            style="background:#e74c3c; color:#fff; border:none; padding:0.3rem 0.8rem; cursor:pointer; border-radius:4px;">
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <!-- Add New Watch -->
+    <h2 style="font-size:1.4rem; margin-bottom:1rem;">Add New Watch</h2>
+
+    <form method="post" action="/admin/add-watch" style="max-width:600px;">
+        <div style="margin-bottom:1rem;">
+            <label style="display:block; margin-bottom:0.3rem;">Brand</label>
+            <input name="brand" class="form-input" placeholder="e.g. Rolex" required />
+        </div>
+        <div style="margin-bottom:1rem;">
+            <label style="display:block; margin-bottom:0.3rem;">Name</label>
+            <input name="name" class="form-input" placeholder="e.g. Submariner" required />
+        </div>
+        <div style="margin-bottom:1rem;">
+            <label style="display:block; margin-bottom:0.3rem;">Model</label>
+            <input name="model" class="form-input" placeholder="e.g. 126610LN" required />
+        </div>
+        <div style="margin-bottom:1rem;">
+            <label style="display:block; margin-bottom:0.3rem;">Movement</label>
+            <input name="movement" class="form-input" placeholder="e.g. Automatic" required />
+        </div>
+        <div style="margin-bottom:1rem;">
+            <label style="display:block; margin-bottom:0.3rem;">Description</label>
+            <input name="description" class="form-input" placeholder="Short description" required />
+        </div>
+        <div style="margin-bottom:1rem;">
+            <label style="display:block; margin-bottom:0.3rem;">Image URL</label>
+            <input name="imageUrl" class="form-input" placeholder="https://..." required />
+        </div>
+        <div style="margin-bottom:1rem;">
+            <label style="display:block; margin-bottom:0.3rem;">Price (USD)</label>
+            <input name="price" type="number" min="1" class="form-input" placeholder="0" required />
+        </div>
+        <div style="margin-bottom:1.5rem; display:flex; align-items:center; gap:0.5rem;">
+            <input name="inStock" type="checkbox" id="instock" />
+            <label for="instock">In Stock</label>
+        </div>
+        <button type="submit" class="hero-cta" style="width:100%;">Add Watch</button>
+    </form>
+</section>
+
+@code {
+    private List<WatchItem> Watches = new();
+    private List<WatchItem> FilteredWatches = new();
+    private bool IsLoading = true;
+
+    [Microsoft.AspNetCore.Components.SupplyParameterFromQuery(Name = "status")]
+    public string? Status { get; set; }
+
+    [Microsoft.AspNetCore.Components.SupplyParameterFromQuery(Name = "brand")]
+    public string? FilterBrand { get; set; }
+
+    [Microsoft.AspNetCore.Components.SupplyParameterFromQuery(Name = "model")]
+    public string? FilterModel { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Watches = await FirestoreService.GetWatchesAsync();
+        FilteredWatches = Watches.Where(w =>
+            (string.IsNullOrEmpty(FilterBrand) || w.Brand.Contains(FilterBrand, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(FilterModel) || w.Model.Contains(FilterModel, StringComparison.OrdinalIgnoreCase))
+        ).ToList();
+        IsLoading = false;
+    }
+}
