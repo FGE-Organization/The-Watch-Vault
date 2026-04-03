@@ -1,0 +1,315 @@
+@page "/locations"
+@attribute [Microsoft.AspNetCore.Components.ExcludeFromInteractiveRouting]
+
+<PageTitle>Our Locations — The Watch Vault</PageTitle>
+
+<link rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin="" />
+
+<section class="locations-hero">
+    <div class="locations-hero-content">
+        <p class="locations-tagline">Our Presence</p>
+        <h1 class="locations-title">Our Locations</h1>
+        <p class="locations-subtitle">
+            Discover three distinguished locations curated to reflect the elegance and prestige of The Watch Vault.
+        </p>
+    </div>
+</section>
+
+<section class="locations-main">
+    <div class="locations-container">
+        <div class="locations-layout">
+
+            <!-- Left column -->
+            <div class="locations-list">
+
+                <div class="locations-panel-head">
+                    <p class="locations-panel-kicker">Boutique Directory</p>
+                    <h2>Visit The Watch Vault</h2>
+                </div>
+
+                <div class="location-card active"
+                     data-location-card="newyork"
+                     onclick="focusLuxuryLocation('newyork')">
+                    <div class="location-card-top">
+                        <span class="location-badge">Flagship</span>
+                        <span class="location-city">New York</span>
+                    </div>
+
+                    <h3>Fifth Avenue Boutique</h3>
+                    <p class="location-address">
+                        550 Fifth Avenue<br />
+                        New York, NY 10036<br />
+                        United States
+                    </p>
+
+                    <p class="location-hours">
+                        Monday – Saturday · 10:00 AM – 7:00 PM
+                    </p>
+
+                    <div class="location-actions">
+                        <button type="button"
+                                class="location-btn-primary"
+                                onclick="event.stopPropagation(); focusLuxuryLocation('newyork');">
+                            View Details
+                        </button>
+
+                        <a class="location-btn-secondary"
+                           href="https://www.google.com/maps/search/?api=1&query=550+Fifth+Avenue+New+York+NY+10036"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           onclick="event.stopPropagation();">
+                            Get Directions
+                        </a>
+                    </div>
+                </div>
+
+                <div class="location-card"
+                     data-location-card="beverlyhills"
+                     onclick="focusLuxuryLocation('beverlyhills')">
+                    <div class="location-card-top">
+                        <span class="location-badge">Private Lounge</span>
+                        <span class="location-city">Beverly Hills</span>
+                    </div>
+
+                    <h3>Rodeo Drive Salon</h3>
+                    <p class="location-address">
+                        301 North Rodeo Drive<br />
+                        Beverly Hills, CA 90210<br />
+                        United States
+                    </p>
+
+                    <p class="location-hours">
+                        Monday – Saturday · 11:00 AM – 7:00 PM
+                    </p>
+
+                    <div class="location-actions">
+                        <button type="button"
+                                class="location-btn-primary"
+                                onclick="event.stopPropagation(); focusLuxuryLocation('beverlyhills');">
+                            View Details
+                        </button>
+
+                        <a class="location-btn-secondary"
+                           href="https://www.google.com/maps/search/?api=1&query=301+North+Rodeo+Drive+Beverly+Hills+CA+90210"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           onclick="event.stopPropagation();">
+                            Get Directions
+                        </a>
+                    </div>
+                </div>
+
+                <div class="location-card"
+                     data-location-card="miami"
+                     onclick="focusLuxuryLocation('miami')">
+                    <div class="location-card-top">
+                        <span class="location-badge">Coastal Gallery</span>
+                        <span class="location-city">Miami</span>
+                    </div>
+
+                    <h3>Brickell Collection House</h3>
+                    <p class="location-address">
+                        701 Brickell Avenue<br />
+                        Miami, FL 33131<br />
+                        United States
+                    </p>
+
+                    <p class="location-hours">
+                        Monday – Saturday · 10:30 AM – 6:30 PM
+                    </p>
+
+                    <div class="location-actions">
+                        <button type="button"
+                                class="location-btn-primary"
+                                onclick="event.stopPropagation(); focusLuxuryLocation('miami');">
+                            View Details
+                        </button>
+
+                        <a class="location-btn-secondary"
+                           href="https://www.google.com/maps/search/?api=1&query=701+Brickell+Avenue+Miami+FL+33131"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           onclick="event.stopPropagation();">
+                            Get Directions
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right column -->
+            <div class="locations-map-card">
+                <div class="locations-map-topbar">
+                    <div>
+                        <p class="locations-map-kicker">Store Locator</p>
+                        <h2 id="locationMapTitle">New York Boutique</h2>
+                    </div>
+                    <span class="locations-map-status">3 Locations</span>
+                </div>
+
+                <div id="luxuryMap" class="lux-map-real"></div>
+
+                <div class="locations-map-footer">
+                    <div class="lux-map-focus-card" id="locationMapInfo">
+                        <p class="focus-kicker">New York</p>
+                        <h3>Fifth Avenue Boutique</h3>
+                        <p>550 Fifth Avenue, New York, NY 10036</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<footer class="site-footer" id="site-footer">
+    <div class="footer-content">
+        <div class="footer-brand">
+            <h4>The Watch Vault</h4>
+            <p>Your destination for luxury timepieces.</p>
+        </div>
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/shop">Shop</a>
+            <a href="/login">Login</a>
+            <a href="/signup">Create Account</a>
+            <a href="/contact">Contact</a>
+            <a href="/locations">Locations</a>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p>&copy; 2026 The Watch Vault. All rights reserved.</p>
+    </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
+
+<script>
+    const watchVaultLocations = {
+        newyork: {
+            key: "newyork",
+            city: "New York",
+            title: "New York Boutique",
+            name: "Fifth Avenue Boutique",
+            address: "550 Fifth Avenue, New York, NY 10036",
+            coords: [40.7567, -73.9818],
+            zoom: 14
+        },
+        beverlyhills: {
+            key: "beverlyhills",
+            city: "Beverly Hills",
+            title: "Beverly Hills Boutique",
+            name: "Rodeo Drive Salon",
+            address: "301 North Rodeo Drive, Beverly Hills, CA 90210",
+            coords: [34.0736, -118.4017],
+            zoom: 14
+        },
+        miami: {
+            key: "miami",
+            city: "Miami",
+            title: "Miami Boutique",
+            name: "Brickell Collection House",
+            address: "701 Brickell Avenue, Miami, FL 33131",
+            coords: [25.7668, -80.1918],
+            zoom: 14
+        }
+    };
+
+    let luxuryMap;
+    let luxuryMarkers = {};
+
+    function createLuxuryMarker() {
+        return L.divIcon({
+            className: "luxury-leaflet-marker-wrap",
+            html: '<div class="luxury-leaflet-marker"></div>',
+            iconSize: [22, 22],
+            iconAnchor: [11, 11]
+        });
+    }
+
+    function initLuxuryMap() {
+        const mapNode = document.getElementById("luxuryMap");
+        if (!mapNode || luxuryMap) return;
+
+        luxuryMap = L.map("luxuryMap", {
+            zoomControl: true,
+            scrollWheelZoom: true
+        });
+
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(luxuryMap);
+
+        Object.values(watchVaultLocations).forEach(location => {
+            const marker = L.marker(location.coords, { icon: createLuxuryMarker() })
+                .addTo(luxuryMap)
+                .bindPopup(
+                    `<div class="lux-popup">
+                        <p class="lux-popup-city">${location.city}</p>
+                        <h3>${location.name}</h3>
+                        <p>${location.address}</p>
+                    </div>`
+                );
+
+            marker.on("click", () => {
+                focusLuxuryLocation(location.key, false);
+            });
+
+            luxuryMarkers[location.key] = marker;
+        });
+
+        const bounds = L.latLngBounds(Object.values(watchVaultLocations).map(x => x.coords));
+        luxuryMap.fitBounds(bounds.pad(0.45));
+
+        setTimeout(() => {
+            focusLuxuryLocation("newyork", false);
+            luxuryMap.invalidateSize();
+        }, 200);
+    }
+
+    function focusLuxuryLocation(key, moveMap = true) {
+        const location = watchVaultLocations[key];
+        if (!location || !luxuryMap) return;
+
+        document.querySelectorAll("[data-location-card]").forEach(card => {
+            card.classList.toggle("active", card.getAttribute("data-location-card") === key);
+        });
+
+        const mapTitle = document.getElementById("locationMapTitle");
+        const mapInfo = document.getElementById("locationMapInfo");
+
+        if (mapTitle) {
+            mapTitle.textContent = location.title;
+        }
+
+        if (mapInfo) {
+            mapInfo.innerHTML = `
+                <p class="focus-kicker">${location.city}</p>
+                <h3>${location.name}</h3>
+                <p>${location.address}</p>
+            `;
+        }
+
+        if (moveMap) {
+            luxuryMap.flyTo(location.coords, location.zoom, {
+                duration: 1.1
+            });
+        } else {
+            luxuryMap.setView(location.coords, location.zoom);
+        }
+
+        const marker = luxuryMarkers[key];
+        if (marker) {
+            marker.openPopup();
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        setTimeout(initLuxuryMap, 100);
+    });
+</script>
