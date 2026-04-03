@@ -83,6 +83,95 @@
     </div>
 </section>
 
+<section class="register-lux-section">
+    <div class="register-lux-wrapper">
+        <div class="register-lux-grid">
+
+            <!-- Left side -->
+            <div class="register-lux-content">
+                <p class="register-lux-kicker">Exclusive Access</p>
+                <h2 class="register-lux-title">Create Your Account</h2>
+                <p class="register-lux-text">
+                    Join The Watch Vault and enjoy a more refined shopping experience.
+                    Save your favorite timepieces, track your interests, and access a
+                    personalized luxury collection curated for you.
+                </p>
+
+                <div class="register-lux-actions">
+                    <a href="/signup" class="register-lux-btn-primary">Register With Us</a>
+                    <a href="/login" class="register-lux-btn-secondary">Sign In</a>
+                </div>
+            </div>
+
+            <!-- Right side -->
+            <div class="register-lux-panel">
+                <div class="register-lux-panel-inner">
+                    <div class="register-lux-line"></div>
+                    <p class="register-lux-panel-label">Member Benefits</p>
+
+                    <div class="register-lux-feature">
+                        <span class="register-lux-dot"></span>
+                        <div>
+                            <h4>Wishlist Saving</h4>
+                            <p>Keep track of the timepieces you love most.</p>
+                        </div>
+                    </div>
+
+                    <div class="register-lux-feature">
+                        <span class="register-lux-dot"></span>
+                        <div>
+                            <h4>Faster Checkout</h4>
+                            <p>Enjoy a more seamless purchase experience.</p>
+                        </div>
+                    </div>
+
+                    <div class="register-lux-feature">
+                        <span class="register-lux-dot"></span>
+                        <div>
+                            <h4>Personalized Access</h4>
+                            <p>Receive a more curated and elevated browsing journey.</p>
+                        </div>
+                    </div>
+
+                    <div class="register-lux-mini-card">
+                        <span class="register-lux-mini-label">The Watch Vault</span>
+                        <span class="register-lux-mini-value">Private Member Experience</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- Newsletter -->
+<section class="newsletter-lux-section">
+    <div class="newsletter-lux-wrapper">
+        <div class="newsletter-lux-card">
+            <div class="newsletter-lux-content">
+                <p class="newsletter-lux-kicker">Stay Connected</p>
+                <h2 class="newsletter-lux-title">Join Our Newsletter</h2>
+                <p class="newsletter-lux-text">
+                    Receive curated updates, featured arrivals, and exclusive highlights from The Watch Vault.
+                </p>
+            </div>
+
+            <form class="newsletter-lux-form" onsubmit="return showNewsletterMessage(event)">
+                <input type="email"
+                       class="newsletter-lux-input"
+                       placeholder="Enter your email"
+                       required />
+                <button type="submit" class="newsletter-lux-btn">Subscribe</button>
+            </form>
+
+            <p id="newsletterMessage" class="newsletter-lux-message">
+                Email registered successfully.
+            </p>
+        </div>
+    </div>
+</section>
+
+
 <!-- Footer -->
 <footer class="site-footer" id="site-footer">
     <div class="footer-content">
@@ -100,3 +189,29 @@
         <p>&copy; 2026 The Watch Vault. All rights reserved.</p>
     </div>
 </footer>
+
+<script>
+    function showNewsletterMessage(event) {
+        event.preventDefault();
+
+        const message = document.getElementById('newsletterMessage');
+        const input = document.querySelector('.newsletter-lux-input');
+
+        if (!message || !input) {
+            return false;
+        }
+
+        if (input.value.trim() === '') {
+            return false;
+        }
+
+        message.classList.add('show');
+        input.value = '';
+
+        setTimeout(() => {
+            message.classList.remove('show');
+        }, 2500);
+
+        return false;
+    }
+</script>

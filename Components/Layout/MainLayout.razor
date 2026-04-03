@@ -23,6 +23,46 @@
             @Body
         </article>
     </main>
+    
+    <div id="cookieNotice" class="cookie-lux-popup">
+        <div class="cookie-lux-content">
+            <p class="cookie-lux-text">
+                We use cookies to enhance your browsing experience and improve our website.
+            </p>
+
+            <div class="cookie-lux-actions">
+                <a href="/privacy" class="cookie-lux-link">Learn more</a>
+                <button id="cookieAcceptBtn" class="cookie-lux-btn">Accept</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (() => {
+            const popup = document.getElementById("cookieNotice");
+            const button = document.getElementById("cookieAcceptBtn");
+
+            if (!popup || !button) return;
+
+            const accepted = localStorage.getItem("watchvault_cookies_accepted");
+
+            if (accepted === "true") {
+                popup.classList.add("cookie-lux-hidden");
+                return;
+            }
+
+            setTimeout(() => {
+                popup.classList.add("cookie-lux-show");
+            }, 500);
+
+            button.addEventListener("click", () => {
+                localStorage.setItem("watchvault_cookies_accepted", "true");
+                popup.classList.remove("cookie-lux-show");
+                popup.classList.add("cookie-lux-hidden");
+            });
+        })();
+    </script>
+
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>
