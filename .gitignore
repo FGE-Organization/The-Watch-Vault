@@ -9,6 +9,10 @@
 # Firebase service account credentials
 firebase-credentials*.json
 
+# App settings (contains secrets)
+appsettings.json
+appsettings.*.json
+
 # User-specific files
 *.rsuser
 *.suo
