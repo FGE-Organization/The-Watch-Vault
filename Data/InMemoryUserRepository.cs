@@ -5,7 +5,6 @@ namespace The_Watch_Vault.Data;
 /// <summary>
 /// In-memory implementation of IUserRepository.
 /// This implementation stores users in a thread-safe dictionary.
-/// It can be easily replaced with a database implementation (SQL Server, DynamoDB, etc.)
 /// </summary>
 public class InMemoryUserRepository : IUserRepository
 {

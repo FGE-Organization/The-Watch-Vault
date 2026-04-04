@@ -4,7 +4,6 @@ namespace The_Watch_Vault.Data;
 
 /// <summary>
 /// Repository interface for user data access.
-/// Designed to support multiple data stores (in-memory, SQL Server, DynamoDB, etc.)
 /// </summary>
 public interface IUserRepository
 {
