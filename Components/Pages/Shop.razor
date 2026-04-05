@@ -1,9 +1,8 @@
 @page "/shop"
 @attribute [Microsoft.AspNetCore.Components.ExcludeFromInteractiveRouting]
-@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
+@inject The_Watch_Vault.Services.FirestoreService FirestoreService
 @using System.Linq
-@using System.Text.Json
-@using System.Text.Json.Serialization
+@using The_Watch_Vault.Services
 
 <PageTitle>Shop — The Watch Vault</PageTitle>
 
@@ -299,30 +298,7 @@ function showNewsletterMessage(event) {
 </script>
 
 @code {
-    public record WatchItem(
-        [property: JsonPropertyName("Id")] string Id,
-        [property: JsonPropertyName("Brand")] string Brand,
-        [property: JsonPropertyName("CreatedAt")] DateTime CreatedAt,
-        [property: JsonPropertyName("Description")] string Description,
-        [property: JsonPropertyName("ImageUrl")] string ImageUrl,
-        [property: JsonPropertyName("InStock")] bool InStock,
-        [property: JsonPropertyName("Model")] string Model,
-        [property: JsonPropertyName("Movement")] string Movement,
-        [property: JsonPropertyName("Name")] string Name,
-        [property: JsonPropertyName("Price")] decimal Price
-    );
-
-    public record BrandItem(string Id, string Description, string LogoUrl, string Name);
-
-    public List<BrandItem> Brands = new()
-    {
-        new BrandItem("1", "Swiss luxury watchmaker.", "", "Rolex"),
-        new BrandItem("2", "Innovative Swiss luxury watches.", "", "Omega"),
-        new BrandItem("3", "Unparalleled craftsmanship.", "", "Patek Philippe"),
-        new BrandItem("4", "Redefining luxury.", "", "Audemars Piguet"),
-        new BrandItem("5", "Master of shapes.", "", "Cartier")
-    };
-
+    public List<BrandItem> Brands { get; set; } = new();
     public List<WatchItem> Watches { get; set; } = new();
     public bool IsLoading { get; set; } = true;
 
@@ -341,15 +317,17 @@ function showNewsletterMessage(event) {
     {
         try
         {
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var path = System.IO.Path.Combine(Env.WebRootPath, "data", "watches.json");
-            var json = await System.IO.File.ReadAllTextAsync(path);
-            Watches = JsonSerializer.Deserialize<List<WatchItem>>(json, options) ?? new();
+            var watchesTask = FirestoreService.GetWatchesAsync();
+            var brandsTask = FirestoreService.GetBrandsAsync();
+            await Task.WhenAll(watchesTask, brandsTask);
+            Watches = watchesTask.Result;
+            Brands = brandsTask.Result.OrderBy(b => b.Name).ToList();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to load watches.json: {ex.Message}");
+            Console.WriteLine($"Failed to load data from Firestore: {ex.Message}");
             Watches = new();
+            Brands = new();
         }
         finally
         {
