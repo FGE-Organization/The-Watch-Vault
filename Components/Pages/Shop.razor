@@ -25,14 +25,18 @@
 </section>
 
 <section class="shop-main">
-    <div class="shop-container">
-        @if (string.Equals(CheckoutStatus, "success", StringComparison.OrdinalIgnoreCase))
-        {
+    @if (string.Equals(CheckoutStatus, "success", StringComparison.OrdinalIgnoreCase))
+    {
+        <div class="shop-container" style="display: block; margin-bottom: 2rem;">
             <div class="checkout-success-banner">
+                <div class="success-icon">✓</div>
                 <strong>Purchase complete.</strong>
                 <span>Your order has been recorded and your cart has been cleared.</span>
             </div>
-        }
+        </div>
+    }
+
+    <div class="shop-container">
 
         <div class="shop-filters">
             <div class="filter-box">

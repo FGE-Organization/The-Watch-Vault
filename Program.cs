@@ -47,11 +47,6 @@ else
 
 // Register Firestore service for watches and brands
 builder.Services.AddSingleton<FirestoreService>();
-builder.Services.AddTransient<FirestoreSeeder>(sp => new FirestoreSeeder(
-    sp.GetRequiredService<FirestoreService>()._db,
-    sp.GetRequiredService<IWebHostEnvironment>(),
-    sp.GetRequiredService<ILogger<FirestoreSeeder>>()
-));
 
 builder.Services.AddAuthentication(options =>
 {
@@ -224,12 +219,6 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 app.MapStaticAssets();
 
-// Seed Firestore with watches.json data if not already populated
-using (var scope = app.Services.CreateScope())
-{
-    var seeder = scope.ServiceProvider.GetRequiredService<FirestoreSeeder>();
-    await seeder.SeedAsync();
-}
 
 app.MapPost("/auth/login", async ([Microsoft.AspNetCore.Mvc.FromForm] string email, [Microsoft.AspNetCore.Mvc.FromForm] string password, [Microsoft.AspNetCore.Mvc.FromForm] string? rememberMe, HttpContext context, IUserRepository userRepository, IConfiguration config) =>
 {

@@ -79,7 +79,7 @@
 
 @code {
     [SupplyParameterFromForm]
-    private SignupModel model { get; set; } = new();
+    private SignupModel model { get; set; } = default!;
 
     private string? SuccessMessage { get; set; }
     private string? ErrorMessage { get; set; }
