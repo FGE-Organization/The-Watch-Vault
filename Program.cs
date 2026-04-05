@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
+using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,32 +23,57 @@ builder.Services.AddScoped<CartUiState>();
 var firebaseProjectId = builder.Configuration["Firebase:ProjectId"];
 var firebaseCredentialsPath = builder.Configuration["Firebase:CredentialsPath"];
 
-if (!string.IsNullOrEmpty(firebaseProjectId) && !string.IsNullOrEmpty(firebaseCredentialsPath))
+// Check if we have Firebase config. If not, we'll use in-memory/mock
+bool useFirestore = !string.IsNullOrEmpty(firebaseProjectId) && !string.IsNullOrEmpty(firebaseCredentialsPath);
+
+if (useFirestore)
 {
-    var fullPath = System.IO.Path.Combine(builder.Environment.ContentRootPath, firebaseCredentialsPath);
-    Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", fullPath);
-    
-    var firestoreBuilder = new Google.Cloud.Firestore.FirestoreDbBuilder
+    var fullPath = System.IO.Path.Combine(builder.Environment.ContentRootPath, firebaseCredentialsPath!);
+    if (System.IO.File.Exists(fullPath))
     {
-        ProjectId = firebaseProjectId,
-        GrpcAdapter = Google.Api.Gax.Grpc.GrpcNetClientAdapter.Default
-    };
-    var firestoreDb = firestoreBuilder.Build();
+        Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", fullPath);
+        
+        var firestoreBuilder = new Google.Cloud.Firestore.FirestoreDbBuilder
+        {
+            ProjectId = firebaseProjectId,
+            GrpcAdapter = Google.Api.Gax.Grpc.GrpcNetClientAdapter.Default
+        };
+        var firestoreDb = firestoreBuilder.Build();
+        
+        builder.Services.AddSingleton(firestoreDb);
+        builder.Services.AddSingleton<IUserRepository, FirestoreUserRepository>();
+        builder.Services.AddSingleton<IWatchRepository, FirestoreWatchRepository>();
+        builder.Services.AddSingleton<ICartRepository, FirestoreCartRepository>();
+        builder.Services.AddSingleton<IPurchaseRepository, FirestorePurchaseRepository>();
+        builder.Services.AddSingleton<FirestoreService>();
+    }
+    else
+    {
+        Console.WriteLine($"[CRITICAL] Firebase key NOT FOUND at: {fullPath}. Falling back to in-memory.");
+        useFirestore = false;
+    }
+}
+
+if (!useFirestore)
+{
+    // Fallback to in-memory/stub to avoid hard crash in UI
+    builder.Services.AddSingleton<IUserRepository, InMemoryUserRepository>();
     
-    builder.Services.AddSingleton(firestoreDb);
-    builder.Services.AddSingleton<IUserRepository, FirestoreUserRepository>();
+    // We register the Firestore repository types but they just won't work — 
+    // This is better than a DI exception (Hard Crash)
     builder.Services.AddSingleton<IWatchRepository, FirestoreWatchRepository>();
     builder.Services.AddSingleton<ICartRepository, FirestoreCartRepository>();
     builder.Services.AddSingleton<IPurchaseRepository, FirestorePurchaseRepository>();
-}
-else
-{
-    // Fallback to in-memory if Firebase is not configured
-    builder.Services.AddSingleton<IUserRepository, InMemoryUserRepository>();
+    builder.Services.AddSingleton<FirestoreService>();
 }
 
-// Register Firestore service for watches and brands
-builder.Services.AddSingleton<FirestoreService>();
+// Support Render/Reverse Proxy (Fixes "Too many redirects")
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 builder.Services.AddAuthentication(options =>
 {
@@ -149,6 +176,9 @@ catch (Exception ex)
 {
     app.Logger.LogWarning(ex, "Failed to seed watches during startup.");
 }
+
+// Must be the first middleware to handle proxy headers
+app.UseForwardedHeaders();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
