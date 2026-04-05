@@ -27,7 +27,7 @@ public class CartItem
     public int Quantity { get; set; }
 
     [FirestoreProperty]
-    public DateTime AddedAt { get; set; } = DateTime.UtcNow;
+    public Timestamp AddedAt { get; set; } = Timestamp.GetCurrentTimestamp();
 
     public double TotalPrice => UnitPrice * Quantity;
 }

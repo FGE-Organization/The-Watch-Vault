@@ -19,11 +19,11 @@
             <button type="button" class="cart-drawer-close" @onclick="CloseDrawer" aria-label="Close cart drawer">&times;</button>
         </div>
 
-        @if (IsLoading)
+        @if (_isLoading)
         {
             <div class="cart-drawer-state">Loading your cart...</div>
         }
-        else if (!Items.Any())
+        else if (!_items.Any())
         {
             <div class="cart-drawer-empty">
                 <h3>Your cart is empty.</h3>
@@ -33,7 +33,7 @@
         else
         {
             <div class="cart-drawer-items">
-                @foreach (var item in Items)
+                @foreach (var item in _items)
                 {
                     <article class="cart-drawer-item">
                         @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
@@ -46,9 +46,9 @@
                             <h3>@item.Name</h3>
                             <p class="cart-drawer-price">$@item.UnitPrice.ToString("N0")</p>
                             <div class="cart-drawer-controls">
-                                <button type="button" @onclick="() => DecreaseQuantity(item)">-</button>
+                                <button type="button" @onclick="() => ChangeQuantity(item, -1)">-</button>
                                 <span>@item.Quantity</span>
-                                <button type="button" @onclick="() => IncreaseQuantity(item)">+</button>
+                                <button type="button" @onclick="() => ChangeQuantity(item, 1)">+</button>
                             </div>
                         </div>
 
@@ -70,91 +70,96 @@
 }
 
 @code {
-    private List<CartItem> Items { get; set; } = new();
-    private bool IsLoading { get; set; } = true;
-    private string? UserId { get; set; }
+    private List<CartItem> _items = new();
+    private bool _isLoading = true;
+    private string? _userId;
 
-    private double CartTotal => Items.Sum(item => item.TotalPrice);
+    private double CartTotal => _items.Sum(item => item.TotalPrice);
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        CartUiState.Changed += HandleCartStateChanged;
-        await LoadIfOpenAsync();
+        CartUiState.Changed += OnCartStateChanged;
     }
 
-    private async void HandleCartStateChanged()
+    private async void OnCartStateChanged()
     {
-        await LoadIfOpenAsync();
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task LoadIfOpenAsync()
-    {
-        if (!CartUiState.IsOpen)
+        try
         {
-            return;
-        }
-
-        IsLoading = true;
-
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        if (user.Identity?.IsAuthenticated == true)
-        {
-            UserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!string.IsNullOrWhiteSpace(UserId))
+            if (CartUiState.IsOpen)
             {
-                Items = await CartRepository.GetCartAsync(UserId);
+                await RefreshCartAsync();
+            }
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[CartDrawer] Error in OnCartStateChanged: {ex.Message}");
+        }
+    }
+
+    private async Task RefreshCartAsync()
+    {
+        _isLoading = true;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                _userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (!string.IsNullOrWhiteSpace(_userId))
+                {
+                    _items = await CartRepository.GetCartAsync(_userId);
+                    CartUiState.SetItemCount(_items.Sum(i => i.Quantity));
+                    Console.WriteLine($"[CartDrawer] Loaded {_items.Count} item(s) for user {_userId}");
+                }
+                else
+                {
+                    _items = new();
+                }
+            }
+            else
+            {
+                _items = new();
             }
         }
-        else
+        catch (Exception ex)
         {
-            Items = new List<CartItem>();
+            Console.WriteLine($"[CartDrawer] RefreshCart error: {ex.Message}");
+            _items = new();
         }
 
-        CartUiState.SetItemCount(Items.Sum(item => item.Quantity));
-        IsLoading = false;
+        _isLoading = false;
     }
 
-    private async Task IncreaseQuantity(CartItem item)
+    private async Task ChangeQuantity(CartItem item, int delta)
     {
-        if (string.IsNullOrWhiteSpace(UserId))
-        {
+        if (string.IsNullOrWhiteSpace(_userId) || string.IsNullOrWhiteSpace(item.Id))
             return;
-        }
 
-        await CartRepository.UpdateQuantityAsync(UserId, item.Id!, item.Quantity + 1);
-        await LoadIfOpenAsync();
-        StateHasChanged();
-    }
+        var newQty = item.Quantity + delta;
+        if (newQty < 1) newQty = 1;
 
-    private async Task DecreaseQuantity(CartItem item)
-    {
-        if (string.IsNullOrWhiteSpace(UserId))
-        {
-            return;
-        }
-
-        await CartRepository.UpdateQuantityAsync(UserId, item.Id!, Math.Max(1, item.Quantity - 1));
-        await LoadIfOpenAsync();
+        await CartRepository.UpdateQuantityAsync(_userId, item.Id, newQty);
+        await RefreshCartAsync();
         StateHasChanged();
     }
 
     private async Task RemoveItem(CartItem item)
     {
-        if (string.IsNullOrWhiteSpace(UserId))
-        {
+        if (string.IsNullOrWhiteSpace(_userId) || string.IsNullOrWhiteSpace(item.Id))
             return;
-        }
 
-        await CartRepository.RemoveFromCartAsync(UserId, item.Id!);
-        await LoadIfOpenAsync();
+        await CartRepository.RemoveFromCartAsync(_userId, item.Id);
+        await RefreshCartAsync();
         StateHasChanged();
     }
 
     private void ContinueToCheckout()
     {
-        CloseDrawer();
+        CartUiState.Close();
         NavManager.NavigateTo("/cart");
     }
 
@@ -165,6 +170,6 @@
 
     public void Dispose()
     {
-        CartUiState.Changed -= HandleCartStateChanged;
+        CartUiState.Changed -= OnCartStateChanged;
     }
 }

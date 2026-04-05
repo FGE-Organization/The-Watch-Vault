@@ -41,7 +41,7 @@ public class FirestoreWatchRepository : IWatchRepository
     {
         if (watch.CreatedAt == default)
         {
-            watch.CreatedAt = DateTime.UtcNow;
+            watch.CreatedAt = Google.Cloud.Firestore.Timestamp.GetCurrentTimestamp();
         }
 
         var collection = _firestoreDb.Collection(CollectionName);

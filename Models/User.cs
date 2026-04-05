@@ -28,8 +28,5 @@ public class User
     public List<string> PurchaseIds { get; set; } = new();
 
     [FirestoreProperty]
-    public DateTime? LastPurchaseAt { get; set; }
-
-    [FirestoreProperty]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public Timestamp CreatedAt { get; set; } = Timestamp.GetCurrentTimestamp();
 }

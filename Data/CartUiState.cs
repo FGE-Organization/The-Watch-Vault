@@ -1,5 +1,9 @@
 namespace The_Watch_Vault.Data;
 
+/// <summary>
+/// Scoped service that tracks cart open/close state and item count
+/// across components within a single Blazor Server circuit.
+/// </summary>
 public sealed class CartUiState
 {
     public event Action? Changed;
@@ -9,41 +13,26 @@ public sealed class CartUiState
 
     public void Open()
     {
-        if (IsOpen)
-        {
-            return;
-        }
-
         IsOpen = true;
-        Changed?.Invoke();
+        NotifyChanged();
     }
 
     public void Close()
     {
-        if (!IsOpen)
-        {
-            return;
-        }
-
         IsOpen = false;
-        Changed?.Invoke();
+        NotifyChanged();
     }
 
     public void Toggle()
     {
         IsOpen = !IsOpen;
-        Changed?.Invoke();
+        NotifyChanged();
     }
 
-    public void SetItemCount(int itemCount)
+    public void SetItemCount(int count)
     {
-        if (ItemCount == itemCount)
-        {
-            return;
-        }
-
-        ItemCount = Math.Max(0, itemCount);
-        Changed?.Invoke();
+        ItemCount = Math.Max(0, count);
+        NotifyChanged();
     }
 
     public void NotifyChanged() => Changed?.Invoke();

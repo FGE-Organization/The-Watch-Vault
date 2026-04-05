@@ -26,7 +26,7 @@ public class InMemoryUserRepository : IUserRepository
 
             // Assign ID and timestamps
             user.Id = Guid.NewGuid().ToString();
-            user.CreatedAt = DateTime.UtcNow;
+            user.CreatedAt = Google.Cloud.Firestore.Timestamp.GetCurrentTimestamp();
 
             // Store in both dictionaries
             _users[user.Id] = user;

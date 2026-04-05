@@ -18,11 +18,19 @@
 </section>
 
 <section style="padding: 4rem 2rem; max-width: 1200px; margin: 0 auto; color: white;">
-    @if (IsLoading)
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div style="background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #f87171; padding: 1rem; border-radius: 8px; margin-bottom: 2rem;">
+            @_errorMessage
+        </div>
+    }
+
+    @if (_isLoading)
     {
         <p>Loading your cart...</p>
     }
-    else if (!Items.Any())
+    else if (!_items.Any())
     {
         <div style="text-align: center; padding: 4rem;">
             <h2>Your cart is empty.</h2>
@@ -33,7 +41,7 @@
     else
     {
         <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
-            @foreach (var item in Items)
+            @foreach (var item in _items)
             {
                 <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; display: flex; align-items: center; justify-content: space-between;">
                     <div style="display: flex; gap: 1.5rem; align-items: center;">
@@ -62,8 +70,8 @@
 
             <div style="background: rgba(255,255,255,0.02); padding: 2rem; border-radius: 8px; text-align: right; margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
                 <h2 style="font-family: 'Cinzel', serif; margin-bottom: 1.5rem;">Total: $@CartTotal.ToString("N0")</h2>
-                    <button @onclick="Checkout" class="hero-cta" style="font-size: 1.2rem; padding: 1rem 3rem;" disabled="@IsSubmitting">
-                        @(IsSubmitting ? "Completing..." : "Complete Checkout")
+                    <button @onclick="Checkout" class="hero-cta" style="font-size: 1.2rem; padding: 1rem 3rem;" disabled="@_isSubmitting">
+                        @(_isSubmitting ? "Completing..." : "Complete Checkout")
                     </button>
             </div>
         </div>
@@ -71,34 +79,43 @@
 </section>
 
 @code {
-    private List<CartItem> Items { get; set; } = new();
-    private bool IsLoading { get; set; } = true;
-    private bool IsSubmitting { get; set; }
-    private string? UserId { get; set; }
-    private string? UserEmail { get; set; }
-    private double CartTotal => Items.Sum(i => i.TotalPrice);
+    private List<CartItem> _items = new();
+    private bool _isLoading = true;
+    private bool _isSubmitting;
+    private string? _userId;
+    private string? _userEmail;
+    private string? _errorMessage;
+    private double CartTotal => _items.Sum(i => i.TotalPrice);
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        if (user.Identity != null && user.Identity.IsAuthenticated)
+        try
         {
-            UserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            UserEmail = user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
-            if (!string.IsNullOrEmpty(UserId))
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if (user.Identity is { IsAuthenticated: true })
             {
-                await LoadCart();
+                _userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                _userEmail = user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+                if (!string.IsNullOrEmpty(_userId))
+                {
+                    await LoadCart();
+                }
             }
         }
-        IsLoading = false;
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Cart] Init error: {ex.Message}");
+            _errorMessage = "Error loading your cart.";
+        }
+        _isLoading = false;
     }
 
     private async Task LoadCart()
     {
-        if (UserId != null)
+        if (_userId != null)
         {
-            Items = await CartRepository.GetCartAsync(UserId);
+            _items = await CartRepository.GetCartAsync(_userId);
         }
     }
 
@@ -106,33 +123,34 @@
     {
         if (int.TryParse(e.Value?.ToString(), out int qty) && qty > 0)
         {
-            await CartRepository.UpdateQuantityAsync(UserId!, item.Id!, qty);
+            await CartRepository.UpdateQuantityAsync(_userId!, item.Id!, qty);
             await LoadCart();
         }
     }
 
     private async Task RemoveItem(CartItem item)
     {
-        await CartRepository.RemoveFromCartAsync(UserId!, item.Id!);
+        await CartRepository.RemoveFromCartAsync(_userId!, item.Id!);
         await LoadCart();
     }
 
     private async Task Checkout()
     {
-        if (UserId == null || string.IsNullOrWhiteSpace(UserEmail) || Items.Count == 0)
-        {
+        if (_userId == null || string.IsNullOrWhiteSpace(_userEmail) || _items.Count == 0)
             return;
-        }
 
-        IsSubmitting = true;
+        _isSubmitting = true;
+        _errorMessage = null;
         
         try
         {
+            Console.WriteLine($"[Cart] Starting checkout for user {_userId}...");
+
             var purchase = new Purchase
             {
-                UserId = UserId,
-                UserEmail = UserEmail,
-                Items = Items.Select(item => new PurchaseItem
+                UserId = _userId,
+                UserEmail = _userEmail,
+                Items = _items.Select(item => new PurchaseItem
                 {
                     WatchId = item.WatchId,
                     Brand = item.Brand,
@@ -147,37 +165,59 @@
             };
 
             var createdPurchase = await PurchaseRepository.CreateAsync(purchase);
+            Console.WriteLine($"[Cart] Purchase created: {createdPurchase.Id}");
 
-            foreach (var item in Items)
+            // Decrement stock
+            foreach (var item in _items)
             {
-                var watch = await WatchRepository.GetByIdAsync(item.WatchId);
-                if (watch != null)
+                try
                 {
-                    watch.StockQuantity = Math.Max(0, watch.StockQuantity - item.Quantity);
-                    await WatchRepository.UpdateAsync(watch);
+                    var watch = await WatchRepository.GetByIdAsync(item.WatchId);
+                    if (watch != null)
+                    {
+                        watch.StockQuantity = Math.Max(0, watch.StockQuantity - item.Quantity);
+                        await WatchRepository.UpdateAsync(watch);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Cart] Warning: Could not update stock for {item.WatchId}: {ex.Message}");
                 }
             }
 
-            var user = await UserRepository.GetByIdAsync(UserId);
-            if (user != null)
+            // Link purchase to user
+            try
             {
-                user.PurchaseIds ??= new List<string>();
-                if (!string.IsNullOrWhiteSpace(createdPurchase.Id))
+                var user = await UserRepository.GetByIdAsync(_userId);
+                if (user != null)
                 {
-                    user.PurchaseIds.Add(createdPurchase.Id);
+                    user.PurchaseIds ??= new List<string>();
+                    if (!string.IsNullOrWhiteSpace(createdPurchase.Id))
+                    {
+                        user.PurchaseIds.Add(createdPurchase.Id);
+                    }
+                    await UserRepository.UpdateAsync(user);
                 }
-                user.LastPurchaseAt = createdPurchase.PurchasedAt;
-                await UserRepository.UpdateAsync(user);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[Cart] Warning: Could not update user record: {ex.Message}");
             }
 
-            await CartRepository.ClearCartAsync(UserId);
-            Items.Clear();
+            await CartRepository.ClearCartAsync(_userId);
+            _items.Clear();
+
+            Console.WriteLine("[Cart] Checkout complete. Redirecting...");
             NavManager.NavigateTo("/shop?checkout=success");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Cart] Checkout EXCEPTION: {ex}");
+            _errorMessage = $"Checkout failed: {ex.Message}";
         }
         finally
         {
-            IsSubmitting = false;
-            IsLoading = false;
+            _isSubmitting = false;
         }
     }
 }

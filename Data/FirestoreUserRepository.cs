@@ -20,7 +20,7 @@ public class FirestoreUserRepository : IUserRepository
             throw new InvalidOperationException($"A user with email '{user.Email}' already exists.");
         }
 
-        user.CreatedAt = DateTime.UtcNow;
+        user.CreatedAt = Timestamp.GetCurrentTimestamp();
 
         var collection = _firestoreDb.Collection(CollectionName);
         var docRef = await collection.AddAsync(user);

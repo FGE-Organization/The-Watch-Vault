@@ -15,7 +15,7 @@ public class Purchase
     public string UserEmail { get; set; } = string.Empty;
 
     [FirestoreProperty]
-    public DateTime PurchasedAt { get; set; } = DateTime.UtcNow;
+    public Timestamp PurchasedAt { get; set; } = Timestamp.GetCurrentTimestamp();
 
     [FirestoreProperty]
     public List<PurchaseItem> Items { get; set; } = new();

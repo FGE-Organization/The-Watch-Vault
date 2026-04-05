@@ -3,12 +3,16 @@ using The_Watch_Vault.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<AuthenticationStateProvider, CookieRevalidatingAuthenticationStateProvider>();
 
 builder.Services.AddScoped<CartUiState>();
 
@@ -160,9 +164,9 @@ app.UseCookiePolicy();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
+app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-app.MapStaticAssets();
 
 // OAuth endpoints - these bypass the normal flow and work with anti-forgery
 app.MapGet("/login-google", async (HttpContext context) =>

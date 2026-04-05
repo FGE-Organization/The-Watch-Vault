@@ -37,8 +37,8 @@ public class Watch
     public int StockQuantity { get; set; }
 
     [FirestoreProperty]
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public Timestamp CreatedAt { get; set; } = Timestamp.GetCurrentTimestamp();
 
-    // Helper property to map backwards compatibility for the old JSON InStock logic
+    // Helper property for backwards compatibility
     public bool InStock => StockQuantity > 0;
 }

@@ -94,7 +94,7 @@
                                 </div>
 
                                 <div class="profile-history-meta">
-                                    <span>@purchase.PurchasedAt.ToLocalTime().ToString("MMM d, yyyy")</span>
+                                    <span>@purchase.PurchasedAt.ToDateTime().ToLocalTime().ToString("MMM d, yyyy")</span>
                                     <span>@purchase.Items.Sum(item => item.Quantity) item(s)</span>
                                 </div>
 
