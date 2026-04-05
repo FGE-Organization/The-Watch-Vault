@@ -1,0 +1,14 @@
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
+@inject NavigationManager Navigation
+
+<a href="/logout" class="@CssClass" @onclick="HandleLogout" @onclick:preventDefault="true" data-enhance-nav="false">@ChildContent</a>
+
+@code {
+    [Parameter] public string? CssClass { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private void HandleLogout()
+    {
+        Navigation.NavigateTo("/logout", forceLoad: true);
+    }
+}

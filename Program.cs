@@ -244,8 +244,8 @@ app.MapGet("/login-google", async (HttpContext context) =>
 });
 app.MapGet("/logout", async (HttpContext context) =>
 {
-    await context.SignOutAsync();
-    context.Response.Redirect("/");
+    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    return Results.Redirect("/");
 });
 
 app.MapPost("/admin/toggle-instock", async (HttpContext context, IFirestoreService firestoreService) =>
