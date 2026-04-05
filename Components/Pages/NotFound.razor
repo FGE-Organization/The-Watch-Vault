@@ -1,5 +1,5 @@
 @page "/404"
-@page "/{*path}"
+@attribute [Microsoft.AspNetCore.Authorization.AllowAnonymous]
 
 <PageTitle>Page not found</PageTitle>
 
@@ -40,7 +40,3 @@
     }
 </style>
 
-@code {
-    [Parameter]
-    public string? path { get; set; }
-}

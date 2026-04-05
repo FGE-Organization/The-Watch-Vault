@@ -2,15 +2,31 @@
     <Found Context="routeData">
         <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
             <NotAuthorized>
-                <RedirectToLogin />
+                <AuthorizeView>
+                    <Authorized Context="signedInNoAccess">
+                        <LayoutView Layout="typeof(Layout.MainLayout)">
+                            <section class="content" style="padding: 6rem 2rem; max-width: 640px; margin: 0 auto;">
+                                <h1>Access denied</h1>
+                                <p>You do not have permission to view this page.</p>
+                                <p><a href="/">Return to home</a></p>
+                            </section>
+                        </LayoutView>
+                    </Authorized>
+                    <NotAuthorized Context="anonymousUser">
+                        <RedirectToLogin />
+                    </NotAuthorized>
+                </AuthorizeView>
             </NotAuthorized>
         </AuthorizeRouteView>
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
     <NotFound>
         <LayoutView Layout="typeof(Layout.MainLayout)">
-            <h1>Page not found</h1>
-            <p>Sorry, there is nothing at this address.</p>
+            <section style="min-height: 50vh; display: grid; place-content: center; gap: 0.75rem; text-align: center; padding: 2rem;">
+                <h1>Page not found</h1>
+                <p style="color: #b8b8c2;">Sorry, there is nothing at this address.</p>
+                <p><a href="/" style="color: #c6a66b; font-weight: 600;">Go back home</a></p>
+            </section>
         </LayoutView>
     </NotFound>
 </Router>

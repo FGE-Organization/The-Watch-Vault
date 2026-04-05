@@ -1,8 +1,8 @@
 @page "/admin"
-@attribute [Microsoft.AspNetCore.Components.ExcludeFromInteractiveRouting]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
 @layout AdminLayout
-@inject The_Watch_Vault.Services.IFirestoreService FirestoreService
-@inject NavigationManager Navigation
+@inject The_Watch_Vault.Data.IWatchRepository WatchRepository
+@using The_Watch_Vault.Models
 @using The_Watch_Vault.Services
 @using The_Watch_Vault.Components.Layout
 
@@ -17,6 +17,10 @@
     @if (Status == "updated") { <p style="color:#2ecc71;margin-bottom:1rem;">Stock status updated.</p> }
     @if (Status == "deleted") { <p style="color:#2ecc71;margin-bottom:1rem;">Watch deleted.</p> }
     @if (Status == "added")   { <p style="color:#2ecc71;margin-bottom:1rem;">Watch added successfully.</p> }
+    @if (!string.IsNullOrEmpty(LoadError))
+    {
+        <p style="color:#e74c3c;margin-bottom:1rem;">Could not load inventory: @LoadError</p>
+    }
 
     <!-- Search filter (GET form) -->
     <form method="get" action="/admin" style="display:flex; gap:1rem; margin-bottom:1rem;">
@@ -124,6 +128,7 @@
     private List<WatchItem> Watches = new();
     private List<WatchItem> FilteredWatches = new();
     private bool IsLoading = true;
+    private string? LoadError;
 
     [Microsoft.AspNetCore.Components.SupplyParameterFromQuery(Name = "status")]
     public string? Status { get; set; }
@@ -136,11 +141,41 @@
 
     protected override async Task OnInitializedAsync()
     {
-        Watches = await FirestoreService.GetWatchesAsync();
-        FilteredWatches = Watches.Where(w =>
-            (string.IsNullOrEmpty(FilterBrand) || w.Brand.Contains(FilterBrand, StringComparison.OrdinalIgnoreCase)) &&
-            (string.IsNullOrEmpty(FilterModel) || w.Model.Contains(FilterModel, StringComparison.OrdinalIgnoreCase))
-        ).ToList();
-        IsLoading = false;
+        try
+        {
+            var list = await WatchRepository.GetAllAsync();
+            Watches = list.Select(ToWatchItem).ToList();
+            FilteredWatches = Watches.Where(MatchesFilters).ToList();
+        }
+        catch (Exception ex)
+        {
+            LoadError = ex.Message;
+            Watches = new();
+            FilteredWatches = new();
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private static WatchItem ToWatchItem(Watch w) => new(
+        w.Id ?? "",
+        w.Brand,
+        w.CreatedAt.ToDateTime(),
+        w.Description,
+        w.ImageUrl,
+        w.InStock,
+        w.Model,
+        w.Movement,
+        w.Name,
+        (decimal)w.Price);
+
+    private bool MatchesFilters(WatchItem w)
+    {
+        var brand = w.Brand ?? "";
+        var model = w.Model ?? "";
+        return (string.IsNullOrEmpty(FilterBrand) || brand.Contains(FilterBrand, StringComparison.OrdinalIgnoreCase))
+            && (string.IsNullOrEmpty(FilterModel) || model.Contains(FilterModel, StringComparison.OrdinalIgnoreCase));
     }
 }

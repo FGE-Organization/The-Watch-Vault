@@ -250,8 +250,17 @@ app.MapGet("/logout", async (HttpContext context) =>
 
 app.MapPost("/admin/toggle-instock", async (HttpContext context, IFirestoreService firestoreService) =>
 {
-    if (!context.User.Identity?.IsAuthenticated == true || !context.User.IsInRole("Admin"))
-    { context.Response.Redirect("/login"); return; }
+    if (context.User.Identity?.IsAuthenticated != true)
+    {
+        context.Response.Redirect("/login");
+        return;
+    }
+
+    if (!context.User.IsInRole("Admin"))
+    {
+        context.Response.Redirect("/");
+        return;
+    }
     var id = context.Request.Form["id"].ToString();
     var current = context.Request.Form["current"].ToString() == "true";
     await firestoreService.UpdateInStockAsync(id, !current);
@@ -260,8 +269,17 @@ app.MapPost("/admin/toggle-instock", async (HttpContext context, IFirestoreServi
 
 app.MapPost("/admin/delete-watch", async (HttpContext context, IFirestoreService firestoreService) =>
 {
-    if (!context.User.Identity?.IsAuthenticated == true || !context.User.IsInRole("Admin"))
-    { context.Response.Redirect("/login"); return; }
+    if (context.User.Identity?.IsAuthenticated != true)
+    {
+        context.Response.Redirect("/login");
+        return;
+    }
+
+    if (!context.User.IsInRole("Admin"))
+    {
+        context.Response.Redirect("/");
+        return;
+    }
     var id = context.Request.Form["id"].ToString();
     await firestoreService.DeleteWatchAsync(id);
     context.Response.Redirect("/admin?status=deleted");
@@ -269,8 +287,17 @@ app.MapPost("/admin/delete-watch", async (HttpContext context, IFirestoreService
 
 app.MapPost("/admin/add-watch", async (HttpContext context, IFirestoreService firestoreService) =>
 {
-    if (!context.User.Identity?.IsAuthenticated == true || !context.User.IsInRole("Admin"))
-    { context.Response.Redirect("/login"); return; }
+    if (context.User.Identity?.IsAuthenticated != true)
+    {
+        context.Response.Redirect("/login");
+        return;
+    }
+
+    if (!context.User.IsInRole("Admin"))
+    {
+        context.Response.Redirect("/");
+        return;
+    }
     var f = context.Request.Form;
     decimal.TryParse(f["price"].ToString(), out var price);
     var inStock = f["inStock"].ToString() == "on";
@@ -290,7 +317,8 @@ app.MapPost("/auth/login", async ([Microsoft.AspNetCore.Mvc.FromForm] string ema
 {
     try
     {
-        // Check for Admin login first
+        // Admin UI is only available for the credentials in Admin:Email / Admin:Password (appsettings or env).
+        // Google OAuth and normal DB logins never receive the Admin role.
         var adminEmail = config["Admin:Email"] ?? "";
         var adminPassword = config["Admin:Password"] ?? "";
 
@@ -298,7 +326,9 @@ app.MapPost("/auth/login", async ([Microsoft.AspNetCore.Mvc.FromForm] string ema
         {
             var adminClaims = new List<System.Security.Claims.Claim>
             {
+                new(System.Security.Claims.ClaimTypes.NameIdentifier, email),
                 new(System.Security.Claims.ClaimTypes.Name, email),
+                new(System.Security.Claims.ClaimTypes.Email, email),
                 new(System.Security.Claims.ClaimTypes.Role, "Admin")
             };
             var adminIdentity = new System.Security.Claims.ClaimsIdentity(adminClaims, CookieAuthenticationDefaults.AuthenticationScheme);

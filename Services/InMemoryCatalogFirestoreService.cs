@@ -1,4 +1,6 @@
+using Google.Cloud.Firestore;
 using The_Watch_Vault.Data;
+using The_Watch_Vault.Models;
 
 namespace The_Watch_Vault.Services;
 
@@ -31,13 +33,35 @@ public sealed class InMemoryCatalogFirestoreService : IFirestoreService
         )).ToList();
     }
 
-    public Task AddWatchAsync(string brand, string name, string model, string movement,
-        string description, string imageUrl, decimal price, bool inStock) =>
-        Task.CompletedTask;
+    public async Task AddWatchAsync(string brand, string name, string model, string movement,
+        string description, string imageUrl, decimal price, bool inStock)
+    {
+        var watch = new Watch
+        {
+            Brand = brand,
+            Name = name,
+            Model = model,
+            Movement = movement,
+            Description = description,
+            ImageUrl = imageUrl,
+            Price = (double)price,
+            StockQuantity = inStock ? 5 : 0,
+            CreatedAt = Timestamp.GetCurrentTimestamp()
+        };
+        await _watches.CreateAsync(watch);
+    }
 
-    public Task DeleteWatchAsync(string id) => Task.CompletedTask;
+    public Task DeleteWatchAsync(string id) => _watches.DeleteAsync(id);
 
-    public Task UpdateInStockAsync(string id, bool inStock) => Task.CompletedTask;
+    public async Task UpdateInStockAsync(string id, bool inStock)
+    {
+        var w = await _watches.GetByIdAsync(id);
+        if (w == null)
+            return;
+
+        w.StockQuantity = inStock ? 5 : 0;
+        await _watches.UpdateAsync(w);
+    }
 
     public async Task<List<BrandItem>> GetBrandsAsync()
     {
