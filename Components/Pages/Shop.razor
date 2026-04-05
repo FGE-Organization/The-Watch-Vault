@@ -6,10 +6,12 @@
 @using System.Text.Json.Serialization
 @using The_Watch_Vault.Models
 @using The_Watch_Vault.Data
+@using The_Watch_Vault.Services
 @inject IWatchRepository WatchRepository
 @inject ICartRepository CartRepository
 @inject AuthenticationStateProvider AuthStateProvider
 @inject CartUiState CartUiState
+@inject FirestoreService FirestoreService
 
 <PageTitle>Shop — The Watch Vault</PageTitle>
 
@@ -210,17 +212,7 @@ function showNewsletterMessage(event) {
 </script>
 
 @code {
-    public record BrandItem(string Id, string Description, string LogoUrl, string Name);
-
-    public List<BrandItem> Brands = new()
-    {
-        new BrandItem("1", "Swiss luxury watchmaker.", "", "Rolex"),
-        new BrandItem("2", "Innovative Swiss luxury watches.", "", "Omega"),
-        new BrandItem("3", "Unparalleled craftsmanship.", "", "Patek Philippe"),
-        new BrandItem("4", "Redefining luxury.", "", "Audemars Piguet"),
-        new BrandItem("5", "Master of shapes.", "", "Cartier")
-    };
-
+    public List<BrandItem> Brands { get; set; } = new();
     public List<Watch> Watches { get; set; } = new();
     public bool IsLoading { get; set; } = true;
 
@@ -249,12 +241,14 @@ function showNewsletterMessage(event) {
         try
         {
             Watches = await WatchRepository.GetAllAsync();
-            Console.WriteLine($"[Shop] Loaded {Watches.Count} watches.");
+            Brands = (await FirestoreService.GetBrandsAsync()).OrderBy(b => b.Name).ToList();
+            Console.WriteLine($"[Shop] Loaded {Watches.Count} watches and {Brands.Count} brands.");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[Shop] Failed to load watches from DB: {ex.Message}");
+            Console.WriteLine($"[Shop] Failed to load data from DB: {ex.Message}");
             Watches = new();
+            Brands = new();
         }
         finally
         {

@@ -1,5 +1,6 @@
 using The_Watch_Vault.Components;
 using The_Watch_Vault.Data;
+using The_Watch_Vault.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
@@ -43,6 +44,14 @@ else
     // Fallback to in-memory if Firebase is not configured
     builder.Services.AddSingleton<IUserRepository, InMemoryUserRepository>();
 }
+
+// Register Firestore service for watches and brands
+builder.Services.AddSingleton<FirestoreService>();
+builder.Services.AddTransient<FirestoreSeeder>(sp => new FirestoreSeeder(
+    sp.GetRequiredService<FirestoreService>()._db,
+    sp.GetRequiredService<IWebHostEnvironment>(),
+    sp.GetRequiredService<ILogger<FirestoreSeeder>>()
+));
 
 builder.Services.AddAuthentication(options =>
 {
@@ -164,18 +173,12 @@ app.UseCookiePolicy();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
-app.MapStaticAssets();
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
 
-// OAuth endpoints - these bypass the normal flow and work with anti-forgery
+
+// Must be registered before MapRazorComponents to avoid route ambiguity with /{*path}
 app.MapGet("/login-google", async (HttpContext context) =>
 {
-    var properties = new AuthenticationProperties
-    {
-        RedirectUri = "/"
-    };
-
+    var properties = new AuthenticationProperties { RedirectUri = "/" };
     await context.ChallengeAsync(GoogleDefaults.AuthenticationScheme, properties);
 });
 app.MapGet("/logout", async (HttpContext context) =>
@@ -184,10 +187,71 @@ app.MapGet("/logout", async (HttpContext context) =>
     context.Response.Redirect("/");
 });
 
-app.MapPost("/auth/login", async ([Microsoft.AspNetCore.Mvc.FromForm] string email, [Microsoft.AspNetCore.Mvc.FromForm] string password, [Microsoft.AspNetCore.Mvc.FromForm] string? rememberMe, HttpContext context, IUserRepository userRepository) =>
+app.MapPost("/admin/toggle-instock", async (HttpContext context, FirestoreService firestoreService) =>
+{
+    if (!context.User.Identity?.IsAuthenticated == true || !context.User.IsInRole("Admin"))
+    { context.Response.Redirect("/login"); return; }
+    var id = context.Request.Form["id"].ToString();
+    var current = context.Request.Form["current"].ToString() == "true";
+    await firestoreService.UpdateInStockAsync(id, !current);
+    context.Response.Redirect("/admin?status=updated");
+}).DisableAntiforgery();
+
+app.MapPost("/admin/delete-watch", async (HttpContext context, FirestoreService firestoreService) =>
+{
+    if (!context.User.Identity?.IsAuthenticated == true || !context.User.IsInRole("Admin"))
+    { context.Response.Redirect("/login"); return; }
+    var id = context.Request.Form["id"].ToString();
+    await firestoreService.DeleteWatchAsync(id);
+    context.Response.Redirect("/admin?status=deleted");
+}).DisableAntiforgery();
+
+app.MapPost("/admin/add-watch", async (HttpContext context, FirestoreService firestoreService) =>
+{
+    if (!context.User.Identity?.IsAuthenticated == true || !context.User.IsInRole("Admin"))
+    { context.Response.Redirect("/login"); return; }
+    var f = context.Request.Form;
+    decimal.TryParse(f["price"].ToString(), out var price);
+    var inStock = f["inStock"].ToString() == "on";
+    await firestoreService.AddWatchAsync(
+        f["brand"].ToString(), f["name"].ToString(), f["model"].ToString(),
+        f["movement"].ToString(), f["description"].ToString(), f["imageUrl"].ToString(),
+        price, inStock);
+    context.Response.Redirect("/admin?status=added");
+}).DisableAntiforgery();
+
+app.MapRazorComponents<App>()
+    .AddInteractiveServerRenderMode();
+app.MapStaticAssets();
+
+// Seed Firestore with watches.json data if not already populated
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<FirestoreSeeder>();
+    await seeder.SeedAsync();
+}
+
+app.MapPost("/auth/login", async ([Microsoft.AspNetCore.Mvc.FromForm] string email, [Microsoft.AspNetCore.Mvc.FromForm] string password, [Microsoft.AspNetCore.Mvc.FromForm] string? rememberMe, HttpContext context, IUserRepository userRepository, IConfiguration config) =>
 {
     try
     {
+        // Check for Admin login first
+        var adminEmail = config["Admin:Email"] ?? "";
+        var adminPassword = config["Admin:Password"] ?? "";
+
+        if (string.Equals(email, adminEmail, StringComparison.OrdinalIgnoreCase) && password == adminPassword)
+        {
+            var adminClaims = new List<System.Security.Claims.Claim>
+            {
+                new(System.Security.Claims.ClaimTypes.Name, email),
+                new(System.Security.Claims.ClaimTypes.Role, "Admin")
+            };
+            var adminIdentity = new System.Security.Claims.ClaimsIdentity(adminClaims, CookieAuthenticationDefaults.AuthenticationScheme);
+            await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new System.Security.Claims.ClaimsPrincipal(adminIdentity));
+            return Results.Redirect("/admin");
+        }
+
+        // Standard user login
         var user = await userRepository.GetByEmailAsync(email);
         if (user != null && !string.IsNullOrEmpty(user.PasswordHash) && BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
         {
