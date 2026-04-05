@@ -19,52 +19,75 @@ builder.Services.AddScoped<AuthenticationStateProvider, CookieRevalidatingAuthen
 
 builder.Services.AddScoped<CartUiState>();
 
-// Configure Firestore
+// Configure Firestore — credentials file is excluded from Docker by .dockerignore; use Firebase:CredentialsJson on Render/hosting.
 var firebaseProjectId = builder.Configuration["Firebase:ProjectId"];
 var firebaseCredentialsPath = builder.Configuration["Firebase:CredentialsPath"];
+var firebaseCredentialsJson = builder.Configuration["Firebase:CredentialsJson"];
 
-// Check if we have Firebase config. If not, we'll use in-memory/mock
-bool useFirestore = !string.IsNullOrEmpty(firebaseProjectId) && !string.IsNullOrEmpty(firebaseCredentialsPath);
+string? resolvedCredentialsPath = null;
 
-if (useFirestore)
+if (!string.IsNullOrWhiteSpace(firebaseCredentialsJson))
 {
-    var fullPath = System.IO.Path.Combine(builder.Environment.ContentRootPath, firebaseCredentialsPath!);
-    if (System.IO.File.Exists(fullPath))
+    try
     {
+        var tempPath = Path.Combine(Path.GetTempPath(), $"gcp-firebase-{Guid.NewGuid():n}.json");
+        File.WriteAllText(tempPath, firebaseCredentialsJson);
+        resolvedCredentialsPath = tempPath;
+        Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", tempPath);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[CRITICAL] Failed to write Firebase:CredentialsJson to a temp file: {ex.Message}");
+    }
+}
+else if (!string.IsNullOrEmpty(firebaseCredentialsPath))
+{
+    var fullPath = Path.Combine(builder.Environment.ContentRootPath, firebaseCredentialsPath);
+    if (File.Exists(fullPath))
+    {
+        resolvedCredentialsPath = fullPath;
         Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", fullPath);
-        
+    }
+    else
+    {
+        Console.WriteLine($"[CRITICAL] Firebase key NOT FOUND at: {fullPath}. Set Firebase:CredentialsJson or mount the key file.");
+    }
+}
+
+var firestoreReady = false;
+if (!string.IsNullOrEmpty(firebaseProjectId) && resolvedCredentialsPath != null)
+{
+    try
+    {
         var firestoreBuilder = new Google.Cloud.Firestore.FirestoreDbBuilder
         {
             ProjectId = firebaseProjectId,
             GrpcAdapter = Google.Api.Gax.Grpc.GrpcNetClientAdapter.Default
         };
         var firestoreDb = firestoreBuilder.Build();
-        
+
         builder.Services.AddSingleton(firestoreDb);
         builder.Services.AddSingleton<IUserRepository, FirestoreUserRepository>();
         builder.Services.AddSingleton<IWatchRepository, FirestoreWatchRepository>();
         builder.Services.AddSingleton<ICartRepository, FirestoreCartRepository>();
         builder.Services.AddSingleton<IPurchaseRepository, FirestorePurchaseRepository>();
         builder.Services.AddSingleton<FirestoreService>();
+        builder.Services.AddSingleton<IFirestoreService>(sp => sp.GetRequiredService<FirestoreService>());
+        firestoreReady = true;
     }
-    else
+    catch (Exception ex)
     {
-        Console.WriteLine($"[CRITICAL] Firebase key NOT FOUND at: {fullPath}. Falling back to in-memory.");
-        useFirestore = false;
+        Console.WriteLine($"[CRITICAL] Firestore initialization failed: {ex.Message}");
     }
 }
 
-if (!useFirestore)
+if (!firestoreReady)
 {
-    // Fallback to in-memory/stub to avoid hard crash in UI
     builder.Services.AddSingleton<IUserRepository, InMemoryUserRepository>();
-    
-    // We register the Firestore repository types but they just won't work — 
-    // This is better than a DI exception (Hard Crash)
-    builder.Services.AddSingleton<IWatchRepository, FirestoreWatchRepository>();
-    builder.Services.AddSingleton<ICartRepository, FirestoreCartRepository>();
-    builder.Services.AddSingleton<IPurchaseRepository, FirestorePurchaseRepository>();
-    builder.Services.AddSingleton<FirestoreService>();
+    builder.Services.AddSingleton<IWatchRepository, InMemoryWatchRepository>();
+    builder.Services.AddSingleton<ICartRepository, InMemoryCartRepository>();
+    builder.Services.AddSingleton<IPurchaseRepository, InMemoryPurchaseRepository>();
+    builder.Services.AddSingleton<IFirestoreService, InMemoryCatalogFirestoreService>();
 }
 
 // Support Render/Reverse Proxy (Fixes "Too many redirects")
@@ -193,12 +216,25 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+// Render and other platforms often probe with HEAD /; Blazor only binds GET, which yields 405 and can trigger noisy health-check retries.
+app.Use(async (context, next) =>
+{
+    if (HttpMethods.IsHead(context.Request.Method) &&
+        string.IsNullOrEmpty(context.Request.Path.Value?.Trim('/')))
+    {
+        context.Response.StatusCode = StatusCodes.Status200OK;
+        return;
+    }
+    await next();
+});
+
 app.UseCookiePolicy();
 
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseAntiforgery();
 
+app.MapGet("/health", () => Results.Ok());
 
 // Must be registered before MapRazorComponents to avoid route ambiguity with /{*path}
 app.MapGet("/login-google", async (HttpContext context) =>
@@ -212,7 +248,7 @@ app.MapGet("/logout", async (HttpContext context) =>
     context.Response.Redirect("/");
 });
 
-app.MapPost("/admin/toggle-instock", async (HttpContext context, FirestoreService firestoreService) =>
+app.MapPost("/admin/toggle-instock", async (HttpContext context, IFirestoreService firestoreService) =>
 {
     if (!context.User.Identity?.IsAuthenticated == true || !context.User.IsInRole("Admin"))
     { context.Response.Redirect("/login"); return; }
@@ -222,7 +258,7 @@ app.MapPost("/admin/toggle-instock", async (HttpContext context, FirestoreServic
     context.Response.Redirect("/admin?status=updated");
 }).DisableAntiforgery();
 
-app.MapPost("/admin/delete-watch", async (HttpContext context, FirestoreService firestoreService) =>
+app.MapPost("/admin/delete-watch", async (HttpContext context, IFirestoreService firestoreService) =>
 {
     if (!context.User.Identity?.IsAuthenticated == true || !context.User.IsInRole("Admin"))
     { context.Response.Redirect("/login"); return; }
@@ -231,7 +267,7 @@ app.MapPost("/admin/delete-watch", async (HttpContext context, FirestoreService 
     context.Response.Redirect("/admin?status=deleted");
 }).DisableAntiforgery();
 
-app.MapPost("/admin/add-watch", async (HttpContext context, FirestoreService firestoreService) =>
+app.MapPost("/admin/add-watch", async (HttpContext context, IFirestoreService firestoreService) =>
 {
     if (!context.User.Identity?.IsAuthenticated == true || !context.User.IsInRole("Admin"))
     { context.Response.Redirect("/login"); return; }

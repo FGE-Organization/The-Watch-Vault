@@ -2,7 +2,7 @@ using Google.Cloud.Firestore;
 
 namespace The_Watch_Vault.Services;
 
-public class FirestoreService
+public class FirestoreService : IFirestoreService
 {
     internal readonly FirestoreDb _db;
 
@@ -11,10 +11,14 @@ public class FirestoreService
         var projectId = configuration["Firebase:ProjectId"]
             ?? throw new InvalidOperationException("Firebase:ProjectId is not configured in appsettings.json.");
 
-        var credentialsPath = configuration["Firebase:CredentialsPath"];
-        if (!string.IsNullOrEmpty(credentialsPath))
+        // Program.cs may already set GOOGLE_APPLICATION_CREDENTIALS (e.g. from Firebase:CredentialsJson on Render).
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS")))
         {
-            Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", credentialsPath);
+            var credentialsPath = configuration["Firebase:CredentialsPath"];
+            if (!string.IsNullOrEmpty(credentialsPath))
+            {
+                Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", credentialsPath);
+            }
         }
 
         _db = FirestoreDb.Create(projectId);
