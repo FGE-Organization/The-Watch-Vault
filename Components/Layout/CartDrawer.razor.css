@@ -1,0 +1,198 @@
+.cart-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(4px);
+    z-index: 180;
+}
+
+.cart-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: min(440px, 100vw);
+    height: 100vh;
+    z-index: 190;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    background: linear-gradient(180deg, rgba(10, 10, 15, 0.98), rgba(8, 9, 14, 0.99));
+    border-left: 1px solid rgba(212, 175, 55, 0.18);
+    box-shadow: -24px 0 50px rgba(0, 0, 0, 0.5);
+    overflow-y: auto;
+    animation: cartDrawerIn 0.28s ease-out;
+}
+
+.cart-drawer-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.cart-drawer-kicker {
+    margin: 0 0 0.35rem 0;
+    color: var(--wv-gold);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+}
+
+.cart-drawer-header h2 {
+    margin: 0;
+    color: var(--wv-text);
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+}
+
+.cart-drawer-close {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--wv-text);
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.cart-drawer-state,
+.cart-drawer-empty {
+    padding: 2rem 1.25rem;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--wv-text-muted);
+}
+
+.cart-drawer-empty h3 {
+    margin: 0 0 0.5rem 0;
+    color: var(--wv-text);
+}
+
+.cart-drawer-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.cart-drawer-item {
+    display: grid;
+    grid-template-columns: 84px 1fr auto;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.cart-drawer-item img {
+    width: 84px;
+    height: 84px;
+    object-fit: cover;
+    border-radius: 14px;
+}
+
+.cart-drawer-item-copy h3 {
+    margin: 0 0 0.35rem 0;
+    color: var(--wv-text);
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem;
+}
+
+.cart-drawer-brand,
+.cart-drawer-price {
+    margin: 0;
+    color: var(--wv-text-muted);
+    font-size: 0.85rem;
+}
+
+.cart-drawer-brand {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--wv-gold);
+    font-weight: 700;
+}
+
+.cart-drawer-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: 0.75rem;
+}
+
+.cart-drawer-controls button {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    background: rgba(212, 175, 55, 0.08);
+    color: var(--wv-text);
+    cursor: pointer;
+}
+
+.cart-drawer-remove {
+    border: none;
+    background: transparent;
+    color: #ffb3b3;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+}
+
+.cart-drawer-summary {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.cart-drawer-summary div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--wv-text-muted);
+}
+
+.cart-drawer-summary strong {
+    color: var(--wv-text);
+    font-size: 1.15rem;
+}
+
+.cart-drawer-checkout {
+    width: 100%;
+}
+
+@keyframes cartDrawerIn {
+    from {
+        transform: translateX(24px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 640px) {
+    .cart-drawer {
+        width: 100vw;
+        padding: 1.15rem;
+    }
+
+    .cart-drawer-item {
+        grid-template-columns: 72px 1fr;
+    }
+
+    .cart-drawer-remove {
+        grid-column: 2;
+        justify-self: start;
+        padding-left: 0;
+    }
+}

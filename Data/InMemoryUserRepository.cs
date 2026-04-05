@@ -10,9 +10,8 @@ namespace The_Watch_Vault.Data;
 public class InMemoryUserRepository : IUserRepository
 {
     // Thread-safe storage for users
-    private readonly Dictionary<int, User> _users = new();
+    private readonly Dictionary<string, User> _users = new();
     private readonly Dictionary<string, User> _usersByEmail = new(StringComparer.OrdinalIgnoreCase);
-    private int _nextId = 1;
     private readonly object _lock = new();
 
     public Task<User> CreateAsync(User user)
@@ -26,7 +25,7 @@ public class InMemoryUserRepository : IUserRepository
             }
 
             // Assign ID and timestamps
-            user.Id = _nextId++;
+            user.Id = Guid.NewGuid().ToString();
             user.CreatedAt = DateTime.UtcNow;
 
             // Store in both dictionaries
@@ -46,12 +45,25 @@ public class InMemoryUserRepository : IUserRepository
         }
     }
 
-    public Task<User?> GetByIdAsync(int id)
+    public Task<User?> GetByIdAsync(string id)
     {
         lock (_lock)
         {
             _users.TryGetValue(id, out var user);
             return Task.FromResult(user);
+        }
+    }
+
+    public Task UpdateAsync(User user)
+    {
+        lock (_lock)
+        {
+            if (!string.IsNullOrEmpty(user.Id) && _users.ContainsKey(user.Id))
+            {
+                _users[user.Id] = user;
+                _usersByEmail[user.Email] = user;
+            }
+            return Task.CompletedTask;
         }
     }
 

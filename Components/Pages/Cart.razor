@@ -1,0 +1,183 @@
+@page "/cart"
+@using The_Watch_Vault.Models
+@using The_Watch_Vault.Data
+@inject ICartRepository CartRepository
+@inject IWatchRepository WatchRepository
+@inject IPurchaseRepository PurchaseRepository
+@inject IUserRepository UserRepository
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavManager
+
+<PageTitle>Your Cart — The Watch Vault</PageTitle>
+
+<section class="shop-hero" style="min-height: 30vh; padding-top: 120px;">
+    <div class="shop-hero-backdrop"></div>
+    <div class="shop-hero-content" style="max-width: 800px; margin: 0 auto; text-align: center;">
+        <h1 class="shop-title">Shopping Cart</h1>
+    </div>
+</section>
+
+<section style="padding: 4rem 2rem; max-width: 1200px; margin: 0 auto; color: white;">
+    @if (IsLoading)
+    {
+        <p>Loading your cart...</p>
+    }
+    else if (!Items.Any())
+    {
+        <div style="text-align: center; padding: 4rem;">
+            <h2>Your cart is empty.</h2>
+            <br />
+            <a href="/shop" class="hero-cta">Return to Shop</a>
+        </div>
+    }
+    else
+    {
+        <div style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
+            @foreach (var item in Items)
+            {
+                <div style="background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 8px; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; gap: 1.5rem; align-items: center;">
+                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+                        {
+                            <img src="@item.ImageUrl" alt="@item.Name" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px;" />
+                        }
+                        <div>
+                            <h3 style="margin: 0 0 0.5rem 0; font-family: 'Cinzel', serif;">@item.Brand - @item.Name</h3>
+                            <p style="margin: 0; opacity: 0.7;">$@item.UnitPrice.ToString("N0")</p>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <span style="opacity: 0.7;">Qty:</span>
+                        <input type="number" min="1" max="10" value="@item.Quantity" 
+                               @onchange="@(async (ChangeEventArgs e) => await UpdateQuantity(item, e))" 
+                               style="background: transparent; border: 1px solid rgba(255,255,255,0.2); color: white; padding: 0.5rem; width: 60px; text-align: center; border-radius: 4px;" />
+                        
+                        <p style="margin: 0; font-weight: bold; width: 100px; text-align: right;">$@item.TotalPrice.ToString("N0")</p>
+                        
+                        <button @onclick="@(() => RemoveItem(item))" style="background: transparent; border: none; color: #ff4444; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                    </div>
+                </div>
+            }
+
+            <div style="background: rgba(255,255,255,0.02); padding: 2rem; border-radius: 8px; text-align: right; margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                <h2 style="font-family: 'Cinzel', serif; margin-bottom: 1.5rem;">Total: $@CartTotal.ToString("N0")</h2>
+                    <button @onclick="Checkout" class="hero-cta" style="font-size: 1.2rem; padding: 1rem 3rem;" disabled="@IsSubmitting">
+                        @(IsSubmitting ? "Completing..." : "Complete Checkout")
+                    </button>
+            </div>
+        </div>
+    }
+</section>
+
+@code {
+    private List<CartItem> Items { get; set; } = new();
+    private bool IsLoading { get; set; } = true;
+    private bool IsSubmitting { get; set; }
+    private string? UserId { get; set; }
+    private string? UserEmail { get; set; }
+    private double CartTotal => Items.Sum(i => i.TotalPrice);
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            UserId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            UserEmail = user.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+            if (!string.IsNullOrEmpty(UserId))
+            {
+                await LoadCart();
+            }
+        }
+        IsLoading = false;
+    }
+
+    private async Task LoadCart()
+    {
+        if (UserId != null)
+        {
+            Items = await CartRepository.GetCartAsync(UserId);
+        }
+    }
+
+    private async Task UpdateQuantity(CartItem item, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int qty) && qty > 0)
+        {
+            await CartRepository.UpdateQuantityAsync(UserId!, item.Id!, qty);
+            await LoadCart();
+        }
+    }
+
+    private async Task RemoveItem(CartItem item)
+    {
+        await CartRepository.RemoveFromCartAsync(UserId!, item.Id!);
+        await LoadCart();
+    }
+
+    private async Task Checkout()
+    {
+        if (UserId == null || string.IsNullOrWhiteSpace(UserEmail) || Items.Count == 0)
+        {
+            return;
+        }
+
+        IsSubmitting = true;
+        
+        try
+        {
+            var purchase = new Purchase
+            {
+                UserId = UserId,
+                UserEmail = UserEmail,
+                Items = Items.Select(item => new PurchaseItem
+                {
+                    WatchId = item.WatchId,
+                    Brand = item.Brand,
+                    Name = item.Name,
+                    ImageUrl = item.ImageUrl,
+                    UnitPrice = item.UnitPrice,
+                    Quantity = item.Quantity,
+                    LineTotal = item.TotalPrice
+                }).ToList(),
+                TotalAmount = CartTotal,
+                Status = "Completed"
+            };
+
+            var createdPurchase = await PurchaseRepository.CreateAsync(purchase);
+
+            foreach (var item in Items)
+            {
+                var watch = await WatchRepository.GetByIdAsync(item.WatchId);
+                if (watch != null)
+                {
+                    watch.StockQuantity = Math.Max(0, watch.StockQuantity - item.Quantity);
+                    await WatchRepository.UpdateAsync(watch);
+                }
+            }
+
+            var user = await UserRepository.GetByIdAsync(UserId);
+            if (user != null)
+            {
+                user.PurchaseIds ??= new List<string>();
+                if (!string.IsNullOrWhiteSpace(createdPurchase.Id))
+                {
+                    user.PurchaseIds.Add(createdPurchase.Id);
+                }
+                user.LastPurchaseAt = createdPurchase.PurchasedAt;
+                await UserRepository.UpdateAsync(user);
+            }
+
+            await CartRepository.ClearCartAsync(UserId);
+            Items.Clear();
+            NavManager.NavigateTo("/shop?checkout=success");
+        }
+        finally
+        {
+            IsSubmitting = false;
+            IsLoading = false;
+        }
+    }
+}

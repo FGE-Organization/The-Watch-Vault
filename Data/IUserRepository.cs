@@ -27,7 +27,12 @@ public interface IUserRepository
     /// </summary>
     /// <param name="id">The user ID.</param>
     /// <returns>The user if found, null otherwise.</returns>
-    Task<User?> GetByIdAsync(int id);
+    Task<User?> GetByIdAsync(string id);
+
+    /// <summary>
+    /// Updates an existing user's data.
+    /// </summary>
+    Task UpdateAsync(User user);
 
     /// <summary>
     /// Checks if a user with the given email already exists.

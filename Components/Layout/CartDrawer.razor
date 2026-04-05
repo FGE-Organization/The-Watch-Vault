@@ -1,0 +1,169 @@
+@using System.Security.Claims
+@using The_Watch_Vault.Data
+@using The_Watch_Vault.Models
+@implements IDisposable
+@inject ICartRepository CartRepository
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavManager
+@inject CartUiState CartUiState
+
+@if (CartUiState.IsOpen)
+{
+    <div class="cart-drawer-backdrop" @onclick="CloseDrawer"></div>
+    <aside class="cart-drawer" aria-label="Shopping cart preview">
+        <div class="cart-drawer-header">
+            <div>
+                <p class="cart-drawer-kicker">Cart Preview</p>
+                <h2>Your Bag</h2>
+            </div>
+            <button type="button" class="cart-drawer-close" @onclick="CloseDrawer" aria-label="Close cart drawer">&times;</button>
+        </div>
+
+        @if (IsLoading)
+        {
+            <div class="cart-drawer-state">Loading your cart...</div>
+        }
+        else if (!Items.Any())
+        {
+            <div class="cart-drawer-empty">
+                <h3>Your cart is empty.</h3>
+                <p>Add a watch from the collection to get started.</p>
+            </div>
+        }
+        else
+        {
+            <div class="cart-drawer-items">
+                @foreach (var item in Items)
+                {
+                    <article class="cart-drawer-item">
+                        @if (!string.IsNullOrWhiteSpace(item.ImageUrl))
+                        {
+                            <img src="@item.ImageUrl" alt="@item.Name" />
+                        }
+
+                        <div class="cart-drawer-item-copy">
+                            <p class="cart-drawer-brand">@item.Brand</p>
+                            <h3>@item.Name</h3>
+                            <p class="cart-drawer-price">$@item.UnitPrice.ToString("N0")</p>
+                            <div class="cart-drawer-controls">
+                                <button type="button" @onclick="() => DecreaseQuantity(item)">-</button>
+                                <span>@item.Quantity</span>
+                                <button type="button" @onclick="() => IncreaseQuantity(item)">+</button>
+                            </div>
+                        </div>
+
+                        <button type="button" class="cart-drawer-remove" @onclick="() => RemoveItem(item)">Remove</button>
+                    </article>
+                }
+            </div>
+
+            <div class="cart-drawer-summary">
+                <div>
+                    <span>Subtotal</span>
+                    <strong>$@CartTotal.ToString("N0")</strong>
+                </div>
+
+                <button type="button" class="hero-cta cart-drawer-checkout" @onclick="ContinueToCheckout">Continue to checkout</button>
+            </div>
+        }
+    </aside>
+}
+
+@code {
+    private List<CartItem> Items { get; set; } = new();
+    private bool IsLoading { get; set; } = true;
+    private string? UserId { get; set; }
+
+    private double CartTotal => Items.Sum(item => item.TotalPrice);
+
+    protected override async Task OnInitializedAsync()
+    {
+        CartUiState.Changed += HandleCartStateChanged;
+        await LoadIfOpenAsync();
+    }
+
+    private async void HandleCartStateChanged()
+    {
+        await LoadIfOpenAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadIfOpenAsync()
+    {
+        if (!CartUiState.IsOpen)
+        {
+            return;
+        }
+
+        IsLoading = true;
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            UserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrWhiteSpace(UserId))
+            {
+                Items = await CartRepository.GetCartAsync(UserId);
+            }
+        }
+        else
+        {
+            Items = new List<CartItem>();
+        }
+
+        IsLoading = false;
+    }
+
+    private async Task IncreaseQuantity(CartItem item)
+    {
+        if (string.IsNullOrWhiteSpace(UserId))
+        {
+            return;
+        }
+
+        await CartRepository.UpdateQuantityAsync(UserId, item.Id!, item.Quantity + 1);
+        await LoadIfOpenAsync();
+        StateHasChanged();
+    }
+
+    private async Task DecreaseQuantity(CartItem item)
+    {
+        if (string.IsNullOrWhiteSpace(UserId))
+        {
+            return;
+        }
+
+        await CartRepository.UpdateQuantityAsync(UserId, item.Id!, Math.Max(1, item.Quantity - 1));
+        await LoadIfOpenAsync();
+        StateHasChanged();
+    }
+
+    private async Task RemoveItem(CartItem item)
+    {
+        if (string.IsNullOrWhiteSpace(UserId))
+        {
+            return;
+        }
+
+        await CartRepository.RemoveFromCartAsync(UserId, item.Id!);
+        await LoadIfOpenAsync();
+        StateHasChanged();
+    }
+
+    private void ContinueToCheckout()
+    {
+        CloseDrawer();
+        NavManager.NavigateTo("/cart");
+    }
+
+    private void CloseDrawer()
+    {
+        CartUiState.Close();
+    }
+
+    public void Dispose()
+    {
+        CartUiState.Changed -= HandleCartStateChanged;
+    }
+}

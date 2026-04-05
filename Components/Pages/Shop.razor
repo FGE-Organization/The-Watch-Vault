@@ -1,9 +1,14 @@
 @page "/shop"
-@attribute [Microsoft.AspNetCore.Components.ExcludeFromInteractiveRouting]
 @inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment Env
 @using System.Linq
 @using System.Text.Json
 @using System.Text.Json.Serialization
+@using The_Watch_Vault.Models
+@using The_Watch_Vault.Data
+@inject IWatchRepository WatchRepository
+@inject ICartRepository CartRepository
+@inject AuthenticationStateProvider AuthStateProvider
+@inject CartUiState CartUiState
 
 <PageTitle>Shop — The Watch Vault</PageTitle>
 
@@ -18,6 +23,14 @@
 
 <section class="shop-main">
     <div class="shop-container">
+        @if (string.Equals(CheckoutStatus, "success", StringComparison.OrdinalIgnoreCase))
+        {
+            <div class="checkout-success-banner">
+                <strong>Purchase complete.</strong>
+                <span>Your order has been recorded and your cart has been cleared.</span>
+            </div>
+        }
+
         <div class="shop-filters">
             <div class="filter-box">
                 <div class="filter-group">
@@ -94,7 +107,7 @@
                                 <p class="watch-price">$@w.Price.ToString("N0")</p>
                                 @if (w.InStock)
                                 {
-                                    <button class="add-to-cart-btn hero-cta">Add to Cart</button>
+                                    <button @onclick="@(() => AddToCart(w))" class="add-to-cart-btn hero-cta">Add to Cart</button>
                                 }
                                 else
                                 {
@@ -299,19 +312,6 @@ function showNewsletterMessage(event) {
 </script>
 
 @code {
-    public record WatchItem(
-        [property: JsonPropertyName("Id")] string Id,
-        [property: JsonPropertyName("Brand")] string Brand,
-        [property: JsonPropertyName("CreatedAt")] DateTime CreatedAt,
-        [property: JsonPropertyName("Description")] string Description,
-        [property: JsonPropertyName("ImageUrl")] string ImageUrl,
-        [property: JsonPropertyName("InStock")] bool InStock,
-        [property: JsonPropertyName("Model")] string Model,
-        [property: JsonPropertyName("Movement")] string Movement,
-        [property: JsonPropertyName("Name")] string Name,
-        [property: JsonPropertyName("Price")] decimal Price
-    );
-
     public record BrandItem(string Id, string Description, string LogoUrl, string Name);
 
     public List<BrandItem> Brands = new()
@@ -323,7 +323,7 @@ function showNewsletterMessage(event) {
         new BrandItem("5", "Master of shapes.", "", "Cartier")
     };
 
-    public List<WatchItem> Watches { get; set; } = new();
+    public List<Watch> Watches { get; set; } = new();
     public bool IsLoading { get; set; } = true;
 
     [Microsoft.AspNetCore.Components.SupplyParameterFromQuery(Name = "q")]
@@ -331,6 +331,9 @@ function showNewsletterMessage(event) {
 
     [Microsoft.AspNetCore.Components.SupplyParameterFromQuery(Name = "sort")]
     public string? CurrentSort { get; set; }
+
+[Microsoft.AspNetCore.Components.SupplyParameterFromQuery(Name = "checkout")]
+public string? CheckoutStatus { get; set; }
 
     [Microsoft.AspNetCore.Components.SupplyParameterFromQuery(Name = "brand")]
     public string[]? SelectedBrandNames { get; set; }
@@ -341,14 +344,11 @@ function showNewsletterMessage(event) {
     {
         try
         {
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var path = System.IO.Path.Combine(Env.WebRootPath, "data", "watches.json");
-            var json = await System.IO.File.ReadAllTextAsync(path);
-            Watches = JsonSerializer.Deserialize<List<WatchItem>>(json, options) ?? new();
+            Watches = await WatchRepository.GetAllAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to load watches.json: {ex.Message}");
+            Console.WriteLine($"Failed to load watches from DB: {ex.Message}");
             Watches = new();
         }
         finally
@@ -367,7 +367,36 @@ function showNewsletterMessage(event) {
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 
-    public IEnumerable<WatchItem> FilteredWatches
+    private async Task AddToCart(Watch watch)
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userId))
+            {
+                var item = new CartItem
+                {
+                    WatchId = watch.Id ?? Guid.NewGuid().ToString(),
+                    Brand = watch.Brand,
+                    Name = watch.Name,
+                    ImageUrl = watch.ImageUrl,
+                    UnitPrice = watch.Price,
+                    Quantity = 1
+                };
+                await CartRepository.AddToCartAsync(userId, item);
+                CartUiState.Open();
+                // Optionally show a toast here. For now, it will seamlessly add it behind the scenes!
+            }
+        }
+        else 
+        {
+           // Wait, you shouldn't be here since the shop is protected!
+        }
+    }
+
+    public IEnumerable<Watch> FilteredWatches
     {
         get
         {
@@ -396,5 +425,4 @@ function showNewsletterMessage(event) {
             };
         }
     }
-
 }

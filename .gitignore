@@ -482,3 +482,9 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Sensitive files
+appsettings.json
+appsettings.Development.json
+firebase-credentials-the-watchvault.json
+Gmail Oauth.txt

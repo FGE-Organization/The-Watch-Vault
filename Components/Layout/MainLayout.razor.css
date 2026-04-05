@@ -79,6 +79,35 @@ main {
     border-bottom-color: var(--wv-gold);
 }
 
+/* Cart icon in navbar */
+.cart-icon-link {
+    appearance: none;
+    border: none;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--wv-text-muted);
+    text-decoration: none;
+    padding: 0.4rem;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    margin-left: 0.5rem;
+}
+
+.cart-toggle-button {
+    cursor: pointer;
+}
+
+.cart-icon-link:hover {
+    color: #fff;
+    background: rgba(212, 175, 55, 0.15);
+}
+
+.cart-icon-link:hover svg {
+    stroke: var(--wv-gold);
+}
+
 /* Hamburger toggle — hidden on desktop */
 .nav-toggle {
     display: none;

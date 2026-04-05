@@ -1,0 +1,192 @@
+@page "/profile"
+@using System.Security.Claims
+@using The_Watch_Vault.Data
+@using The_Watch_Vault.Models
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IUserRepository UserRepository
+@inject IPurchaseRepository PurchaseRepository
+
+<PageTitle>Your Profile — The Watch Vault</PageTitle>
+
+<section class="shop-hero" style="min-height: 40vh; padding-top: 120px;">
+    <div class="shop-hero-backdrop"></div>
+    <div class="shop-hero-content" style="max-width: 800px; margin: 0 auto; text-align: center;">
+        <h1 class="shop-title">Membership Profile</h1>
+        <p class="shop-subtitle">Manage your credentials and view your Vault access details.</p>
+    </div>
+</section>
+
+<section class="profile-shell">
+    <div class="profile-card">
+        <div class="profile-grid">
+            <div class="profile-panel">
+                <div class="profile-field">
+                    <label>
+                        <span>Name</span>
+                        @if (!IsEditingName)
+                        {
+                            <button @onclick="EditName" class="profile-link-button">Edit</button>
+                        }
+                    </label>
+
+                    <div class="profile-value">
+                        @if (IsEditingName)
+                        {
+                            <div class="profile-edit-row">
+                                <input type="text" @bind="UserName" class="profile-input" />
+                                <button @onclick="SaveName" class="hero-cta profile-save-button">Save</button>
+                            </div>
+                        }
+                        else
+                        {
+                            @UserName
+                        }
+                    </div>
+                </div>
+
+                <div class="profile-field">
+                    <label>Email Address</label>
+                    <div class="profile-value">@UserEmail</div>
+                </div>
+
+                <div class="profile-field">
+                    <label>Vault ID</label>
+                    <div class="profile-value profile-mono">@UserId</div>
+                </div>
+
+                <div class="profile-actions">
+                    <a href="/logout" class="hero-cta profile-logout-button">Secure Logout</a>
+                </div>
+            </div>
+
+            <div class="profile-panel profile-history-panel">
+                <div class="profile-history-header">
+                    <div>
+                        <p class="profile-kicker">Purchase History</p>
+                        <h2>Your Orders</h2>
+                    </div>
+                    <span class="profile-history-count">@Purchases.Count orders</span>
+                </div>
+
+                @if (IsLoadingPurchases)
+                {
+                    <div class="profile-history-empty">Loading purchases...</div>
+                }
+                else if (!Purchases.Any())
+                {
+                    <div class="profile-history-empty">
+                        <h3>No purchases yet.</h3>
+                        <p>Your completed orders will appear here once you check out.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="profile-history-list">
+                        @foreach (var purchase in Purchases)
+                        {
+                            <article class="profile-history-item">
+                                <div class="profile-history-topline">
+                                    <div>
+                                        <p class="profile-history-label">Order</p>
+                                        <h3>@(string.IsNullOrWhiteSpace(purchase.Id) ? "Draft Order" : purchase.Id[..Math.Min(8, purchase.Id.Length)].ToUpperInvariant())</h3>
+                                    </div>
+                                    <span class="profile-history-status">@purchase.Status</span>
+                                </div>
+
+                                <div class="profile-history-meta">
+                                    <span>@purchase.PurchasedAt.ToLocalTime().ToString("MMM d, yyyy")</span>
+                                    <span>@purchase.Items.Sum(item => item.Quantity) item(s)</span>
+                                </div>
+
+                                <div class="profile-history-lines">
+                                    @foreach (var line in purchase.Items.Take(3))
+                                    {
+                                        <div class="profile-history-line">
+                                            <span>@line.Brand - @line.Name</span>
+                                            <strong>$@line.LineTotal.ToString("N0")</strong>
+                                        </div>
+                                    }
+
+                                    @if (purchase.Items.Count > 3)
+                                    {
+                                        <div class="profile-history-more">+@(purchase.Items.Count - 3) more item(s)</div>
+                                    }
+                                </div>
+
+                                <div class="profile-history-total">
+                                    <span>Total</span>
+                                    <strong>$@purchase.TotalAmount.ToString("N0")</strong>
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    private string UserName = "Client";
+    private string UserEmail = "Loading...";
+    private string UserId = "Vault Key pending...";
+    private bool IsEditingName = false;
+    private bool IsLoadingPurchases = true;
+    private List<Purchase> Purchases { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            UserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "System Assigned";
+            
+            // Wait, we should pull the real name from Firestore if possible, otherwise rely on claims
+            if (!string.IsNullOrEmpty(UserId) && UserId != "System Assigned")
+            {
+                var dbUser = await UserRepository.GetByIdAsync(UserId);
+                if (dbUser != null)
+                {
+                    UserName = dbUser.Name;
+                    UserEmail = dbUser.Email;
+                }
+                else
+                {
+                    UserName = user.FindFirst(ClaimTypes.Name)?.Value ?? "Valued Client";
+                    UserEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? "Unknown";
+                }
+
+                Purchases = await PurchaseRepository.GetByUserIdAsync(UserId);
+                IsLoadingPurchases = false;
+                return;
+            }
+
+            UserName = user.FindFirst(ClaimTypes.Name)?.Value ?? "Valued Client";
+            UserEmail = user.FindFirst(ClaimTypes.Email)?.Value ?? "Unknown";
+            Purchases = new List<Purchase>();
+        }
+
+        IsLoadingPurchases = false;
+    }
+
+    private void EditName()
+    {
+        IsEditingName = true;
+    }
+
+    private async Task SaveName()
+    {
+        if (!string.IsNullOrEmpty(UserId) && UserId != "System Assigned")
+        {
+            var dbUser = await UserRepository.GetByIdAsync(UserId);
+            if (dbUser != null)
+            {
+                dbUser.Name = UserName;
+                await UserRepository.UpdateAsync(dbUser);
+            }
+        }
+        IsEditingName = false;
+    }
+}
