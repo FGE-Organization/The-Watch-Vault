@@ -1,0 +1,43 @@
+@page "/brands"
+
+<PageTitle>Brands</PageTitle>
+
+<section class="brands-hero">
+    <div class="brands-hero-backdrop"></div>
+    <div class="brands-hero-content">
+        <p class="brands-tagline">House Directory</p>
+        <h1 class="brands-title">Explore Our Featured Brands</h1>
+        <p class="brands-subtitle">
+            Discover iconic maisons and modern innovators curated for collectors and first-time enthusiasts alike.
+        </p>
+    </div>
+</section>
+
+<section class="brands-main">
+    <div class="brands-grid">
+        @foreach (var brand in BrandCards)
+        {
+            <article class="brand-card" style="--brand-accent:@brand.Accent">
+                <div class="brand-logo" aria-hidden="true">
+                    <span>@brand.Initials</span>
+                </div>
+                <h2 class="brand-name">@brand.Name</h2>
+                <p class="brand-description">@brand.Description</p>
+            </article>
+        }
+    </div>
+</section>
+
+@code {
+    private static readonly IReadOnlyList<BrandCard> BrandCards =
+    [
+        new("Rolex", "RX", "#bfa15a", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."),
+        new("Omega", "OM", "#8aa0c9", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."),
+        new("Patek Philippe", "PP", "#9f8cbf", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."),
+        new("Audemars Piguet", "AP", "#4fa38c", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."),
+        new("Cartier", "CT", "#c78b8b", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."),
+        new("TAG Heuer", "TH", "#c9a84c", "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.")
+    ];
+
+    private sealed record BrandCard(string Name, string Initials, string Accent, string Description);
+}
