@@ -5,6 +5,7 @@ public sealed class CartUiState
     public event Action? Changed;
 
     public bool IsOpen { get; private set; }
+    public int ItemCount { get; private set; }
 
     public void Open()
     {
@@ -31,6 +32,17 @@ public sealed class CartUiState
     public void Toggle()
     {
         IsOpen = !IsOpen;
+        Changed?.Invoke();
+    }
+
+    public void SetItemCount(int itemCount)
+    {
+        if (ItemCount == itemCount)
+        {
+            return;
+        }
+
+        ItemCount = Math.Max(0, itemCount);
         Changed?.Invoke();
     }
 

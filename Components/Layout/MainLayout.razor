@@ -1,5 +1,9 @@
 @inherits LayoutComponentBase
 @inject CartUiState CartUiState
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ICartRepository CartRepository
+
+@implements IDisposable
 
 <div class="page">
     <header class="top-navbar">
@@ -33,6 +37,10 @@
                             <circle cx="20" cy="21" r="1"></circle>
                             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
                         </svg>
+                        @if (CartUiState.ItemCount > 0)
+                        {
+                            <span class="cart-count-badge">@CartUiState.ItemCount</span>
+                        }
                     </button>
                 </Authorized>
             </AuthorizeView>
@@ -95,8 +103,43 @@
 </div>
 
 @code {
+    protected override async Task OnInitializedAsync()
+    {
+        CartUiState.Changed += HandleCartStateChanged;
+        await SyncCartCountAsync();
+    }
+
+    private async void HandleCartStateChanged()
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
     private void OpenCartDrawer()
     {
         CartUiState.Open();
+    }
+
+    private async Task SyncCartCountAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrWhiteSpace(userId))
+            {
+                var cartItems = await CartRepository.GetCartAsync(userId);
+                CartUiState.SetItemCount(cartItems.Sum(item => item.Quantity));
+                return;
+            }
+        }
+
+        CartUiState.SetItemCount(0);
+    }
+
+    public void Dispose()
+    {
+        CartUiState.Changed -= HandleCartStateChanged;
     }
 }

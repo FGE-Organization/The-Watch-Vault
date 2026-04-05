@@ -107,7 +107,7 @@
                                 <p class="watch-price">$@w.Price.ToString("N0")</p>
                                 @if (w.InStock)
                                 {
-                                    <button @onclick="@(() => AddToCart(w))" class="add-to-cart-btn hero-cta">Add to Cart</button>
+                                    <button type="button" @onclick="@(() => AddToCart(w))" class="add-to-cart-btn hero-cta">Add to Cart</button>
                                 }
                                 else
                                 {
@@ -386,6 +386,8 @@ public string? CheckoutStatus { get; set; }
                     Quantity = 1
                 };
                 await CartRepository.AddToCartAsync(userId, item);
+                var cartItems = await CartRepository.GetCartAsync(userId);
+                CartUiState.SetItemCount(cartItems.Sum(cartItem => cartItem.Quantity));
                 CartUiState.Open();
                 // Optionally show a toast here. For now, it will seamlessly add it behind the scenes!
             }

@@ -112,6 +112,7 @@
             Items = new List<CartItem>();
         }
 
+        CartUiState.SetItemCount(Items.Sum(item => item.Quantity));
         IsLoading = false;
     }
 
