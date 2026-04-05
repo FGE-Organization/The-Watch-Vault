@@ -11,7 +11,7 @@
 @inject ICartRepository CartRepository
 @inject AuthenticationStateProvider AuthStateProvider
 @inject CartUiState CartUiState
-@inject FirestoreService FirestoreService
+@inject IFirestoreService CatalogService
 
 <PageTitle>Shop — The Watch Vault</PageTitle>
 
@@ -245,7 +245,7 @@ function showNewsletterMessage(event) {
         try
         {
             Watches = await WatchRepository.GetAllAsync();
-            Brands = (await FirestoreService.GetBrandsAsync()).OrderBy(b => b.Name).ToList();
+            Brands = (await CatalogService.GetBrandsAsync()).OrderBy(b => b.Name).ToList();
             Console.WriteLine($"[Shop] Loaded {Watches.Count} watches and {Brands.Count} brands.");
         }
         catch (Exception ex)
