@@ -239,7 +239,8 @@ app.MapGet("/health", () => Results.Ok());
 // Must be registered before MapRazorComponents to avoid route ambiguity with /{*path}
 app.MapGet("/login-google", async (HttpContext context) =>
 {
-    var properties = new AuthenticationProperties { RedirectUri = "/" };
+    var safe = SanitizeLocalReturnUrl(context.Request.Query["returnUrl"].ToString());
+    var properties = new AuthenticationProperties { RedirectUri = safe ?? "/" };
     await context.ChallengeAsync(GoogleDefaults.AuthenticationScheme, properties);
 });
 app.MapGet("/logout", async (HttpContext context) =>
@@ -313,7 +314,7 @@ app.MapRazorComponents<App>()
 app.MapStaticAssets();
 
 
-app.MapPost("/auth/login", async ([Microsoft.AspNetCore.Mvc.FromForm] string email, [Microsoft.AspNetCore.Mvc.FromForm] string password, [Microsoft.AspNetCore.Mvc.FromForm] string? rememberMe, HttpContext context, IUserRepository userRepository, IConfiguration config) =>
+app.MapPost("/auth/login", async ([Microsoft.AspNetCore.Mvc.FromForm] string email, [Microsoft.AspNetCore.Mvc.FromForm] string password, [Microsoft.AspNetCore.Mvc.FromForm] string? rememberMe, [Microsoft.AspNetCore.Mvc.FromForm] string? returnUrl, HttpContext context, IUserRepository userRepository, IConfiguration config) =>
 {
     try
     {
@@ -321,6 +322,7 @@ app.MapPost("/auth/login", async ([Microsoft.AspNetCore.Mvc.FromForm] string ema
         // Google OAuth and normal DB logins never receive the Admin role.
         var adminEmail = config["Admin:Email"] ?? "";
         var adminPassword = config["Admin:Password"] ?? "";
+        var safeReturn = SanitizeLocalReturnUrl(returnUrl);
 
         if (string.Equals(email, adminEmail, StringComparison.OrdinalIgnoreCase) && password == adminPassword)
         {
@@ -333,7 +335,7 @@ app.MapPost("/auth/login", async ([Microsoft.AspNetCore.Mvc.FromForm] string ema
             };
             var adminIdentity = new System.Security.Claims.ClaimsIdentity(adminClaims, CookieAuthenticationDefaults.AuthenticationScheme);
             await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new System.Security.Claims.ClaimsPrincipal(adminIdentity));
-            return Results.Redirect("/admin");
+            return Results.Redirect(safeReturn ?? "/admin");
         }
 
         // Standard user login
@@ -351,7 +353,7 @@ app.MapPost("/auth/login", async ([Microsoft.AspNetCore.Mvc.FromForm] string ema
             {
                 IsPersistent = rememberMe == "true"
             });
-            return Results.Redirect("/shop");
+            return Results.Redirect(safeReturn ?? "/shop");
         }
         return Results.Redirect("/login?error=Invalid email or password");
     }
@@ -361,5 +363,11 @@ app.MapPost("/auth/login", async ([Microsoft.AspNetCore.Mvc.FromForm] string ema
     }
 });
 
+static string? SanitizeLocalReturnUrl(string? returnUrl)
+{
+    if (string.IsNullOrEmpty(returnUrl)) return null;
+    if (!returnUrl.StartsWith('/') || returnUrl.StartsWith("//", StringComparison.Ordinal)) return null;
+    return returnUrl;
+}
 
 app.Run();

@@ -15,6 +15,10 @@
 
             <!-- OAuth Login Section -->
             <form action="/login-google" method="get" class="oauth-section" @formname="GoogleOAuthForm">
+                @if (!string.IsNullOrEmpty(ReturnUrl))
+                {
+                    <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+                }
                 <button type="submit" class="oauth-btn oauth-btn-google">
                     <svg class="oauth-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -32,6 +36,10 @@
 
             <form action="/auth/login" method="post" class="login-form">
                 <AntiforgeryToken />
+                @if (!string.IsNullOrEmpty(ReturnUrl))
+                {
+                    <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+                }
                 @if (!string.IsNullOrEmpty(ErrorMessage))
                 {
                     <div class="validation-summary">
@@ -74,6 +82,9 @@
 @code {
     [SupplyParameterFromQuery(Name = "error")]
     public string? ErrorParam { get; set; }
+
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
 
     private string? ErrorMessage { get; set; }
 
